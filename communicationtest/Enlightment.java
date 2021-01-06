@@ -1,4 +1,4 @@
-package firstbot;
+package communicationtest;
 
 import battlecode.common.Direction;
 import battlecode.common.RobotController;
@@ -12,8 +12,7 @@ public class Enlightment extends MyRobot {
 
     public void play(){
         buildNewRobots();
-        NewRobot nr = getNewRobot();
-        if (nr != null) build(nr);
+        rc.setIndicatorDot(rc.getLocation(), 0, 0, 0);
     }
 
     void buildNewRobots(){
@@ -23,8 +22,9 @@ public class Enlightment extends MyRobot {
         buildNewRobots();
     }
 
+    //TODO
     NewRobot getNewRobot(){
-        return new NewRobot(RobotType.MUCKRAKER, 1);
+        return new NewRobot(RobotType.SLANDERER, 1);
     }
 
     boolean build(NewRobot nr){
@@ -39,15 +39,6 @@ public class Enlightment extends MyRobot {
             e.printStackTrace();
         }
         return false;
-    }
-
-
-    public void initTurn(){
-
-    }
-
-    public void endTurn(){
-
     }
 
     class NewRobot{

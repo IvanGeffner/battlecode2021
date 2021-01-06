@@ -1,4 +1,4 @@
-package firstbot;
+package pathfindingtest;
 
 import battlecode.common.Clock;
 import battlecode.common.GameActionException;

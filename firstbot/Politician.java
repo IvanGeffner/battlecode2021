@@ -1,5 +1,6 @@
 package firstbot;
-import battlecode.common.*;
+
+import battlecode.common.RobotController;
 
 public class Politician extends MyRobot {
 

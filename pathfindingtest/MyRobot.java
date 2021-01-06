@@ -1,4 +1,4 @@
-package firstbot;
+package pathfindingtest;
 
 import battlecode.common.Direction;
 import battlecode.common.RobotController;

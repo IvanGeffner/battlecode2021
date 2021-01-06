@@ -1,0 +1,44 @@
+void checkWest(){
+        try {
+            if (lowerBoundX != null) return;
+            MapLocation loc = rc.getLocation().add(Direction.WEST);
+            if (!rc.canSenseLocation(loc)) return;
+            if (!rc.onTheMap(loc)){
+                lowerBoundX = loc.y;
+                return;
+            }
+            loc = loc.add(Direction.WEST);
+            if (!rc.canSenseLocation(loc)) return;
+            if (!rc.onTheMap(loc)){
+                lowerBoundX = loc.y;
+                return;
+            }
+            loc = loc.add(Direction.WEST);
+            if (!rc.canSenseLocation(loc)) return;
+            if (!rc.onTheMap(loc)){
+                lowerBoundX = loc.y;
+                return;
+            }
+            loc = loc.add(Direction.WEST);
+            if (!rc.canSenseLocation(loc)) return;
+            if (!rc.onTheMap(loc)){
+                lowerBoundX = loc.y;
+                return;
+            }
+            loc = loc.add(Direction.WEST);
+            if (!rc.canSenseLocation(loc)) return;
+            if (!rc.onTheMap(loc)){
+                lowerBoundX = loc.y;
+                return;
+            }
+            loc = loc.add(Direction.WEST);
+            if (!rc.canSenseLocation(loc)) return;
+            if (!rc.onTheMap(loc)){
+                lowerBoundX = loc.y;
+                return;
+            }
+        } catch (Throwable e){
+            e.printStackTrace();
+        }
+
+    }

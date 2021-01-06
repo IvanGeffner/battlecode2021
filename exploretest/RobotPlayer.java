@@ -1,8 +1,6 @@
-package firstbot;
+package exploretest;
 
-import battlecode.common.Clock;
-import battlecode.common.GameActionException;
-import battlecode.common.RobotController;
+import battlecode.common.*;
 
 public strictfp class RobotPlayer {
     static RobotController rc;

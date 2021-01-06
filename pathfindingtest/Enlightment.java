@@ -1,4 +1,4 @@
-package firstbot;
+package pathfindingtest;
 
 import battlecode.common.Direction;
 import battlecode.common.RobotController;
@@ -6,21 +6,14 @@ import battlecode.common.RobotType;
 
 public class Enlightment extends MyRobot {
 
+    boolean built = false;
     public Enlightment(RobotController rc){
         super(rc);
     }
 
     public void play(){
-        buildNewRobots();
         NewRobot nr = getNewRobot();
-        if (nr != null) build(nr);
-    }
-
-    void buildNewRobots(){
-        NewRobot nr = getNewRobot();
-        if (nr == null) return;
-        if (!build(nr)) return;
-        buildNewRobots();
+        if (!built && nr != null) built = build(nr);
     }
 
     NewRobot getNewRobot(){

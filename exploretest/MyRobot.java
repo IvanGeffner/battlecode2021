@@ -1,4 +1,4 @@
-package firstbot;
+package exploretest;
 
 import battlecode.common.Direction;
 import battlecode.common.RobotController;
@@ -18,18 +18,27 @@ public abstract class MyRobot {
 
     RobotController rc;
     Pathfinding path;
+    Explore explore;
+    int creationRound;
 
 
     public MyRobot(RobotController rc){
         this.rc = rc;
         path = new Pathfinding(rc);
+        explore = new Explore(rc);
+        creationRound = rc.getRoundNum();
     }
 
     abstract void play();
 
-    abstract void initTurn();
+    void initTurn(){
+        explore.checkBounds();
+    }
 
-    abstract void endTurn();
+    void endTurn(){
+        explore.initialize();
+        explore.markSeen(); //maybe end of turn?
+    }
 
 
 }

@@ -1,10 +1,10 @@
-package firstbot;
+package exploretest;
 
 import battlecode.common.RobotController;
 
-public class Slanderer extends MyRobot {
+public class Politician extends MyRobot {
 
-    public Slanderer(RobotController rc){
+    public Politician(RobotController rc){
         super(rc);
     }
 
