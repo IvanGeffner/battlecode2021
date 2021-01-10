@@ -1,7 +1,6 @@
-package communicationtest;
+package rushbot;
 
 import battlecode.common.Direction;
-import battlecode.common.GameConstants;
 import battlecode.common.RobotController;
 import battlecode.common.RobotType;
 
@@ -11,12 +10,16 @@ public class Enlightment extends MyRobot {
         super(rc);
     }
 
+    int max_robots = 1000000;
+    int robots_built = 0;
+
     public void play(){
         buildNewRobots();
         //rc.setIndicatorDot(rc.getLocation(), 0, 0, 0);
     }
 
     void buildNewRobots(){
+        if (robots_built >= max_robots) return;
         NewRobot nr = getNewRobot();
         if (nr == null) return;
         if (!build(nr)) return;
@@ -30,9 +33,10 @@ public class Enlightment extends MyRobot {
 
     boolean build(NewRobot nr){
         try {
-            for (Direction dir : Direction.values()) {
+            for (Direction dir : directions) {
                 if (rc.canBuildRobot(nr.robotType, dir, nr.influence)) {
                     rc.buildRobot(nr.robotType, dir, nr.influence);
+                    ++robots_built;
                     return true;
                 }
             }

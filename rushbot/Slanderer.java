@@ -1,23 +1,9 @@
-package communicationtest;
+package rushbot;
 
-import battlecode.common.Direction;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 
 public class Slanderer extends MyRobot {
-
-
-    static final Direction[] directions = {
-            Direction.NORTH,
-            Direction.NORTHEAST,
-            Direction.EAST,
-            Direction.SOUTHEAST,
-            Direction.SOUTH,
-            Direction.SOUTHWEST,
-            Direction.WEST,
-            Direction.NORTHWEST,
-            Direction.CENTER
-    };
 
     public Slanderer(RobotController rc){
         super(rc);

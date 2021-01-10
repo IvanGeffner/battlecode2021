@@ -1,9 +1,6 @@
 package communicationtest;
 
-import battlecode.common.Clock;
-import battlecode.common.Direction;
-import battlecode.common.MapLocation;
-import battlecode.common.RobotController;
+import battlecode.common.*;
 
 public class Explore {
 
@@ -20,22 +17,45 @@ public class Explore {
     final int initBytecodeLeft = 200;
     final int visitedBytecodeLeft = 100;
 
-    Integer upperBoundX = null, lowerBoundX = null, upperBoundY = null, lowerBoundY = null;
-
     MapLocation exploreTarget = null;
 
-    Explore (RobotController rc){
+    Communication comm;
+
+    Explore (RobotController rc, Communication comm){
         this.rc = rc;
+        this.comm = comm;
         senseRadius = rc.getType().sensorRadiusSquared;
         fillDirPath();
         Math.random(); //for some reason the first entry is buggy...
     }
 
+    void initTurn(){
+        checkBounds();
+        checkRobots();
+    }
+
+    void checkRobots(){
+        RobotInfo[] robots = rc.senseNearbyRobots();
+        for (RobotInfo r : robots){
+            if (r.getType() == RobotType.ENLIGHTENMENT_CENTER){
+                comm.exploredEC(r);
+                continue;
+            }
+            if (r.getTeam() == rc.getTeam()){
+                comm.exploredNonEC(r);
+                continue;
+            }
+        }
+        if (rc.getType() == RobotType.ENLIGHTENMENT_CENTER){
+            comm.exploredECSelf();
+        }
+    }
+
     boolean inTheMap(MapLocation loc){
-        if (upperBoundX != null && loc.x >= upperBoundX) return false;
-        if (lowerBoundX != null && loc.x <= lowerBoundX) return false;
-        if (upperBoundY != null && loc.y >= upperBoundY) return false;
-        if (lowerBoundY != null && loc.y <= lowerBoundY) return false;
+        if (comm.getBound(comm.ubX) != null && loc.x >= comm.getBound(comm.ubX)) return false;
+        if (comm.getBound(comm.lbX) != null && loc.x <= comm.getBound(comm.lbX)) return false;
+        if (comm.getBound(comm.ubY) != null && loc.y >= comm.getBound(comm.ubY)) return false;
+        if (comm.getBound(comm.lbY) != null && loc.y <= comm.getBound(comm.lbY)) return false;
         return true;
     }
 
@@ -95,10 +115,10 @@ public class Explore {
         checkEast();
         checkWest();
         //if (rc.getRoundNum() < 300){
-        //if (upperBoundX != null) rc.setIndicatorLine(rc.getLocation(), new MapLocation(upperBoundX, rc.getLocation().y), 255, 0, 0);
-        //if (lowerBoundX != null) rc.setIndicatorLine(rc.getLocation(), new MapLocation(lowerBoundX, rc.getLocation().y), 255, 0, 0);
-        //if (upperBoundY != null) rc.setIndicatorLine(rc.getLocation(), new MapLocation(rc.getLocation().x, upperBoundY), 255, 0, 0);
-        //if (lowerBoundY != null) rc.setIndicatorLine(rc.getLocation(), new MapLocation(rc.getLocation().x, lowerBoundY), 255, 0, 0);//}
+        //if (comm.getBound(comm.ubX) != null) rc.setIndicatorLine(rc.getLocation(), new MapLocation(comm.getBound(comm.ubX), rc.getLocation().y), 255, 0, 0);
+        //if ((comm.getBound(comm.lbX) != null) rc.setIndicatorLine(rc.getLocation(), new MapLocation((comm.getBound(comm.lbX), rc.getLocation().y), 255, 0, 0);
+        //if ((comm.getBound(comm.ubY) != null) rc.setIndicatorLine(rc.getLocation(), new MapLocation(rc.getLocation().x, (comm.getBound(comm.ubY)), 255, 0, 0);
+        //if ((comm.getBound(comm.lbY) != null) rc.setIndicatorLine(rc.getLocation(), new MapLocation(rc.getLocation().x, (comm.getBound(comm.lbY)), 255, 0, 0);//}
     }
 
     void markSeen(){
@@ -138,37 +158,37 @@ public class Explore {
 
     void checkNorth(){
         try {
-            if (upperBoundY != null) return;
+            if (comm.getBound(comm.ubY) != null) return;
             MapLocation loc = rc.getLocation().add(Direction.NORTH);
             if (!rc.onTheMap(loc)){
-                upperBoundY = loc.y;
+                comm.exploredNorth(loc.y);
                 return;
             }
             loc = loc.add(Direction.NORTH);
             if (!rc.onTheMap(loc)){
-                upperBoundY = loc.y;
+                comm.exploredNorth(loc.y);
                 return;
             }
             loc = loc.add(Direction.NORTH);
             if (!rc.onTheMap(loc)){
-                upperBoundY = loc.y;
+                comm.exploredNorth(loc.y);
                 return;
             }
             loc = loc.add(Direction.NORTH);
             if (!rc.onTheMap(loc)){
-                upperBoundY = loc.y;
+                comm.exploredNorth(loc.y);
                 return;
             }
             loc = loc.add(Direction.NORTH);
             if (senseRadius < 25) return;
             if (!rc.onTheMap(loc)){
-                upperBoundY = loc.y;
+                comm.exploredNorth(loc.y);
                 return;
             }
             loc = loc.add(Direction.NORTH);
             if (senseRadius < 36) return;
             if (!rc.onTheMap(loc)){
-                upperBoundY = loc.y;
+                comm.exploredNorth(loc.y);
                 return;
             }
         } catch (Throwable e){
@@ -179,37 +199,37 @@ public class Explore {
 
     void checkSouth(){
         try {
-            if (lowerBoundY != null) return;
+            if (comm.getBound(comm.lbY) != null) return;
             MapLocation loc = rc.getLocation().add(Direction.SOUTH);
             if (!rc.onTheMap(loc)){
-                lowerBoundY = loc.y;
+                comm.exploredSouth(loc.y);
                 return;
             }
             loc = loc.add(Direction.SOUTH);
             if (!rc.onTheMap(loc)){
-                lowerBoundY = loc.y;
+                comm.exploredSouth(loc.y);
                 return;
             }
             loc = loc.add(Direction.SOUTH);
             if (!rc.onTheMap(loc)){
-                lowerBoundY = loc.y;
+                comm.exploredSouth(loc.y);
                 return;
             }
             loc = loc.add(Direction.SOUTH);
             if (!rc.onTheMap(loc)){
-                lowerBoundY = loc.y;
+                comm.exploredSouth(loc.y);
                 return;
             }
             loc = loc.add(Direction.SOUTH);
             if (senseRadius < 25) return;
             if (!rc.onTheMap(loc)){
-                lowerBoundY = loc.y;
+                comm.exploredSouth(loc.y);
                 return;
             }
             loc = loc.add(Direction.SOUTH);
             if (senseRadius < 36) return;
             if (!rc.onTheMap(loc)){
-                lowerBoundY = loc.y;
+                comm.exploredSouth(loc.y);
                 return;
             }
         } catch (Throwable e){
@@ -220,37 +240,37 @@ public class Explore {
 
     void checkEast(){
         try {
-            if (upperBoundX != null) return;
+            if (comm.getBound(comm.ubX) != null) return;
             MapLocation loc = rc.getLocation().add(Direction.EAST);
             if (!rc.onTheMap(loc)){
-                upperBoundX = loc.x;
+                comm.exploredEast(loc.x);
                 return;
             }
             loc = loc.add(Direction.EAST);
             if (!rc.onTheMap(loc)){
-                upperBoundX = loc.x;
+                comm.exploredEast(loc.x);
                 return;
             }
             loc = loc.add(Direction.EAST);
             if (!rc.onTheMap(loc)){
-                upperBoundX = loc.x;
+                comm.exploredEast(loc.x);
                 return;
             }
             loc = loc.add(Direction.EAST);
             if (!rc.onTheMap(loc)){
-                upperBoundX = loc.x;
+                comm.exploredEast(loc.x);
                 return;
             }
             loc = loc.add(Direction.EAST);
             if (senseRadius < 25) return;
             if (!rc.onTheMap(loc)){
-                upperBoundX = loc.x;
+                comm.exploredEast(loc.x);
                 return;
             }
             loc = loc.add(Direction.EAST);
             if (senseRadius < 36) return;
             if (!rc.onTheMap(loc)){
-                upperBoundX = loc.x;
+                comm.exploredEast(loc.x);
                 return;
             }
         } catch (Throwable e){
@@ -261,37 +281,37 @@ public class Explore {
 
     void checkWest(){
         try {
-            if (lowerBoundX != null) return;
+            if (comm.getBound(comm.lbX) != null) return;
             MapLocation loc = rc.getLocation().add(Direction.WEST);
             if (!rc.onTheMap(loc)){
-                lowerBoundX = loc.x;
+                comm.exploredWest(loc.x);
                 return;
             }
             loc = loc.add(Direction.WEST);
             if (!rc.onTheMap(loc)){
-                lowerBoundX = loc.x;
+                comm.exploredWest(loc.x);
                 return;
             }
             loc = loc.add(Direction.WEST);
             if (!rc.onTheMap(loc)){
-                lowerBoundX = loc.x;
+                comm.exploredWest(loc.x);
                 return;
             }
             loc = loc.add(Direction.WEST);
             if (!rc.onTheMap(loc)){
-                lowerBoundX = loc.x;
+                comm.exploredWest(loc.x);
                 return;
             }
             loc = loc.add(Direction.WEST);
             if (senseRadius < 25) return;
             if (!rc.onTheMap(loc)){
-                lowerBoundX = loc.x;
+                comm.exploredWest(loc.x);
                 return;
             }
             loc = loc.add(Direction.WEST);
             if (senseRadius < 36) return;
             if (!rc.onTheMap(loc)){
-                lowerBoundX = loc.x;
+                comm.exploredWest(loc.x);
                 return;
             }
         } catch (Throwable e){

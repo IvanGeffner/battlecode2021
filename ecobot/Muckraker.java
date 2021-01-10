@@ -1,4 +1,4 @@
-package communicationtest;
+package ecobot;
 
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;

@@ -1,4 +1,4 @@
-package communicationtest;
+package rushbot;
 
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;

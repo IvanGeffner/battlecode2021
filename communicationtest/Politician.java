@@ -12,12 +12,4 @@ public class Politician extends MyRobot {
 
     }
 
-    public void initTurn(){
-
-    }
-
-    public void endTurn(){
-
-    }
-
 }

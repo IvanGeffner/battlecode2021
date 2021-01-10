@@ -45,26 +45,6 @@ public class Pathfinding {
         return 1e9;
     }
 
-    void computeAverageImpassability(){
-        try {
-            MapLocation myLoc = rc.getLocation();
-            int cont = 0;
-            for (Direction dir : directions) {
-                MapLocation newLoc = myLoc.add(dir);
-                if (!rc.onTheMap(newLoc)) continue;
-                avgImpassabilityInv += 1.0 / rc.sensePassability(newLoc);
-                ++cont;
-            }
-            if (cont != 0) {
-                avgImpassabilityInv /= cont;
-                return;
-            }
-        } catch (Throwable e){
-            e.printStackTrace();
-        }
-        avgImpassabilityInv = minPassabilityInv;
-    }
-
     public void move(MapLocation loc){
         try {
             if (rc.getCooldownTurns() >= 1) return;

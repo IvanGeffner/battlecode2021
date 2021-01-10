@@ -1,4 +1,4 @@
-package secondbot;
+package ecobot;
 
 import battlecode.common.RobotController;
 

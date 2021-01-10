@@ -13,8 +13,6 @@ public class Muckraker extends MyRobot {
         MapLocation loc = explore.getExploreTarget();
         path.move(loc);
         if (loc != null){
-            //System.err.println("My target is " + loc);
-            rc.setIndicatorLine(loc, rc.getLocation(),0, 0, 0);
         }
     }
 

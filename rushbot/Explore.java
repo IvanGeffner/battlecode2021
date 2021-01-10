@@ -1,4 +1,4 @@
-package secondbot;
+package rushbot;
 
 import battlecode.common.*;
 
@@ -114,6 +114,11 @@ public class Explore {
         checkSouth();
         checkEast();
         checkWest();
+        //if (rc.getRoundNum() < 300){
+        //if (comm.getBound(comm.ubX) != null) rc.setIndicatorLine(rc.getLocation(), new MapLocation(comm.getBound(comm.ubX), rc.getLocation().y), 255, 0, 0);
+        //if ((comm.getBound(comm.lbX) != null) rc.setIndicatorLine(rc.getLocation(), new MapLocation((comm.getBound(comm.lbX), rc.getLocation().y), 255, 0, 0);
+        //if ((comm.getBound(comm.ubY) != null) rc.setIndicatorLine(rc.getLocation(), new MapLocation(rc.getLocation().x, (comm.getBound(comm.ubY)), 255, 0, 0);
+        //if ((comm.getBound(comm.lbY) != null) rc.setIndicatorLine(rc.getLocation(), new MapLocation(rc.getLocation().x, (comm.getBound(comm.lbY)), 255, 0, 0);//}
     }
 
     void markSeen(){

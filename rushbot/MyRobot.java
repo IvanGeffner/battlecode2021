@@ -1,4 +1,4 @@
-package secondbot;
+package rushbot;
 
 import battlecode.common.Direction;
 import battlecode.common.RobotController;
