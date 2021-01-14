@@ -1,4 +1,4 @@
-package ecobot;
+package seven;
 
 import battlecode.common.*;
 
@@ -7,21 +7,31 @@ public class Communication {
     final int MAX_MAP_SIZE = GameConstants.MAP_MAX_HEIGHT;
     final int MAX_MAP_SIZE2 = 2*MAX_MAP_SIZE;
     final int MIN_ID = 10000;
-    final int BYTECODE_REMAINING = 2000;
+    final int BYTECODE_REMAINING = 6000;
+
+    final int BYTECODE_USED_UNITS = 3000;
 
     RobotController rc;
     int senseRadius;
     Team myTeam;
     boolean meEC;
+    boolean meSlanderer;
+
+    int myTeamIndex, enemyTeamIndex;
 
     RInfo myEC = null;
     int currentFlag = 0;
+
+    final int messageTries = 16*3 + 2;
 
     Communication(RobotController rc){
         this.rc = rc;
         senseRadius = rc.getType().sensorRadiusSquared;
         myTeam = rc.getTeam();
         meEC = rc.getType() == RobotType.ENLIGHTENMENT_CENTER;
+        meSlanderer = rc.getType() == RobotType.SLANDERER;
+        myTeamIndex = myTeam.ordinal();
+        enemyTeamIndex = myTeam.opponent().ordinal();
     }
 
     enum MType{
@@ -32,6 +42,7 @@ public class Communication {
         EC_Y,
         X,
         Y,
+        ENEMY_MUCKRAKER
     }
 
     //INFO
@@ -45,7 +56,7 @@ public class Communication {
     RInfo nonECRead = null;
     BoundInfo lbX = null, lbY = null, ubX = null, ubY = null;
 
-    Integer IDUnit = null;
+    Integer emergencyMessage = null;
 
     //CORE METHODS
 
@@ -66,17 +77,23 @@ public class Communication {
         for (RInfo r = firstEC; r != null; r = r.nextInfo){
             MapLocation loc = r.getMapLocation();
             if (loc == null) continue;
-            rc.setIndicatorLine(rc.getLocation(), loc, 255, 0, 0);
+            if (r.team == myTeamIndex) rc.setIndicatorLine(rc.getLocation(), loc, 255, 0, 0);
+            else if (r.team == enemyTeamIndex) rc.setIndicatorLine(rc.getLocation(), loc, 0, 255, 0);
+            else rc.setIndicatorLine(rc.getLocation(), loc, 0, 255, 255);
         }
     }
 
-    void readMessages(){ //TODO: cap bytecode expense per type
+    void readMessages(){
         try {
             if (running()) return;
-
+            if (meSlanderer){
+                firstNonEC = null;
+                lastNonEC = null;
+            }
             //visible robots
             RobotInfo[] visibleRobots = rc.senseNearbyRobots(senseRadius, myTeam);
             for (RobotInfo r : visibleRobots) {
+                if (Clock.getBytecodeNum() > BYTECODE_USED_UNITS) break;
                 int id = r.getID();
                 processMessage(rc.getFlag(id), checkECID(id));
             }
@@ -108,20 +125,23 @@ public class Communication {
     void setFlag(){
         try {
             if (running()) return;
-            if (IDUnit != null){
-                rc.setFlag(encodeMessage(MType.NON_EC_ID, getMessageNonEC()));
-                IDUnit = null;
+            if (emergencyMessage != null){
+                //rc.setFlag(encodeMessage(MType.NON_EC_ID, getMessageNonEC()));
+                rc.setFlag(emergencyMessage + 1);
+                if (meEC) System.err.println("Echoing " + emergencyMessage + " of type " + getType(emergencyMessage));
+                else System.err.println("Emergency " + emergencyMessage + " of type " + getType(emergencyMessage));
+                emergencyMessage = null;
                 return;
             }
             currentFlag = 0;
             mIndex.set();
             if (!meEC){
-                if (myEC != null) setFlagUnknown();
-                if (currentFlag == 0) setFlagNonEC();
-                //else System.err.println("Unknown Message to ID " + myEC.id + ": " + currentFlag);
+                if (myEC != null) setFlagUnknown(messageTries);
+                if (currentFlag == 0) setFlagNonEC(messageTries);
+                else System.err.println("Unknown Message to ID " + myEC.id + ": " + currentFlag);
             }
-            else setFlagEC();
-            rc.setFlag(currentFlag);
+            else setFlagEC(messageTries);
+            rc.setFlag(currentFlag + 1);
         } catch (Exception e){
             e.printStackTrace();
         }
@@ -196,10 +216,10 @@ public class Communication {
             RInfo ri = new RInfo(r.getID(), r.getTeam().ordinal(), false);
             addNonEC(ri);
         } else{
-            if (IDUnit != null) return;
+            if (emergencyMessage != null) return;
             if (idTracker.checkID(r.getID())) return;
             idTracker.addID(r.getID());
-            IDUnit = r.getID();
+            emergencyMessage = encodeMessage(MType.NON_EC_ID, getMessageNonEC(r.getID()));
         }
     }
 
@@ -233,20 +253,22 @@ public class Communication {
         return myEC.id == id;
     }
 
-    void setFlagEC(){
+    void setFlagEC(int remainingTries){
+        if (remainingTries-- <= 0) return;
         Integer mes = mIndex.getFlag(false);
         if (mes == null){
             if (!mIndex.advance()) return;
-            setFlagEC();
+            setFlagEC(remainingTries);
         }
         else currentFlag = mes;
     }
 
-    void setFlagUnknown(){
+    void setFlagUnknown(int remainingTries){
+        if (remainingTries-- <= 0) return;
         Integer mes = mIndex.getFlag(true);
         if (mes == null){
             if (!mIndex.advance()) return;
-            setFlagUnknown();
+            setFlagUnknown(remainingTries);
         }
         else{
             //System.err.println("Got here with message " + mes);
@@ -254,28 +276,38 @@ public class Communication {
         }
     }
 
-    void setFlagNonEC(){
+    void setFlagNonEC(int remainingTries){
+        if (remainingTries-- <= 0) return;
         while (!mIndex.forNonEC()) if (!mIndex.advance()) return;
         Integer mes = mIndex.getFlag(false);
         if (mes == null){
             if (!mIndex.advance()) return;
-            setFlagNonEC();
+            setFlagNonEC(remainingTries);
         }
         else currentFlag = mes;
     }
 
     void processMessage(int code, boolean sentByMyEC){
         //if (sentByMyEC) System.err.println("Got message from HQ: "+ code);
+        if (code-- < 0) return;
         MType mType = getType(code);
         int content = getContent(code);
         switch(mType){
             case NONE: return;
+            case ENEMY_MUCKRAKER:
+                if (!meSlanderer) return;
+                MapLocation loc = getMuckrakerLoc(content);
+                RInfo muck = new RInfo(0, enemyTeamIndex, false);
+                muck.loc = loc;
+                //note that there is no locX or locY
+                addNonEC(muck);
+                break;
             case NON_EC_ID:
                 if (!meEC) return;
                 int id = getID(content);
                 if (idTracker.checkID(id)) return;
                 idTracker.addID(id);
-                RInfo ec = new RInfo(id, myTeam.ordinal(), false);
+                RInfo ec = new RInfo(id, myTeamIndex, false);
                 addNonEC(ec);
                 return;
             case EC_ID:
@@ -286,6 +318,7 @@ public class Communication {
                     //System.err.println("Adding " + id);
                     ec = new RInfo(id, getExtraElement(content), true);
                     addEC(ec);
+                    if (meEC) emergencyMessage = code;
                 }
                 ec.knownID |= sentByMyEC;
                 return;
@@ -295,6 +328,7 @@ public class Communication {
                 ec = getEC(id);
                 if (ec == null) return;
                 //System.err.println("Got info about x coordinate of " + id + " and it is " + getExtraElement(content));
+                if (meEC && ec.locX == null) emergencyMessage = code;
                 ec.locX = getActualValue(rc.getLocation().x, getExtraElement(content));
                 ec.knownLocX |= sentByMyEC;
                 ecMapLocations.add(ec.getMapLocation());
@@ -304,6 +338,7 @@ public class Communication {
                 ec = getEC(id);
                 if (ec == null) return;
                 //System.err.println("Got info about y coordinate of " + id + " and it is " + getExtraElement(content));
+                if (meEC && ec.locY == null) emergencyMessage = code;
                 ec.locY = getActualValue(rc.getLocation().y, getExtraElement(content));
                 ec.knownLocY |= sentByMyEC;
                 ecMapLocations.add(ec.getMapLocation());
@@ -317,6 +352,18 @@ public class Communication {
         }
     }
 
+    void reportMuckraker(MapLocation loc){
+        int x = loc.x%MAX_MAP_SIZE2;
+        int y = loc.y%MAX_MAP_SIZE2;
+        emergencyMessage = encodeMessage(MType.ENEMY_MUCKRAKER, ((x << 7) | y));
+    }
+
+    MapLocation getMuckrakerLoc(int content){
+        int x = getActualValue(rc.getLocation().x, content >>> 7);
+        int y = getActualValue(rc.getLocation().y, content&0x7F);
+        return new MapLocation(x,y);
+    }
+
     int getActualValue(int reference, int coordinate){
         int dif = coordinate - (reference%MAX_MAP_SIZE2);
         if (dif >= MAX_MAP_SIZE) dif -= MAX_MAP_SIZE2;
@@ -327,36 +374,44 @@ public class Communication {
 
     void processBoundX(int content, int reference, boolean known){
         Integer l = getLow(content, reference), u = getHigh(content, reference);
+        boolean echo = false;
         //System.out.println("Processing X " + content + " " +  l + " " + u);
         if (l != null) {
             if (lbX == null) {
                 lbX = new BoundInfo(l, known);
+                echo = true;
             }
             lbX.known |= known;
         }
         if (u != null) {
             if (ubX == null) {
                 ubX = new BoundInfo(u, known);
+                echo = true;
             }
             ubX.known |= known;
         }
+        //if (meEC && echo) emergencyMessage = getMessage(MType.X, lbX, ubX, false);
     }
 
     void processBoundY(int content, int reference, boolean known){
         Integer l = getLow(content, reference), u = getHigh(content, reference);
+        boolean echo = false;
         //System.out.println("Processing Y " + content + " " +  l + " " + u);
         if (l != null) {
             if (lbY == null) {
                 lbY = new BoundInfo(l, known);
+                echo = true;
             }
             lbY.known |= known;
         }
         if (u != null) {
             if (ubY == null) {
                 ubY = new BoundInfo(u, known);
+                echo = true;
             }
             ubY.known |= known;
         }
+        //if (meEC && echo) emergencyMessage = getMessage(MType.Y, lbY, ubY, false);
     }
 
     Integer getLow(int boundCode, int reference){
@@ -391,8 +446,8 @@ public class Communication {
         return null;
     }
 
-    int getMessageNonEC(){
-        return ((IDUnit - MIN_ID) << 7) | myTeam.ordinal();
+    int getMessageNonEC(int id){
+        return ((id - MIN_ID) << 7) | myTeam.ordinal();
     }
 
     boolean running(){
@@ -510,6 +565,7 @@ public class Communication {
                 case NONE:
                 case EC_X:
                 case EC_Y:
+                case ENEMY_MUCKRAKER:
                 case NON_EC_ID: return false;
                 case X:
                 case Y: return true;
@@ -520,6 +576,7 @@ public class Communication {
         Integer getFlag(boolean unknown){
             switch(messageTypes[currentType]){
                 case NONE:
+                case ENEMY_MUCKRAKER:
                 case EC_X:
                 case EC_Y:
                 case NON_EC_ID: return null;
@@ -617,16 +674,16 @@ public class Communication {
         int runningIndex = 0;
         boolean isRunning = true;
 
-        int REASONABLE_MAX_EC = 12;
+        int REASONABLE_MAX_EC = 24;
         int lastArrayElement = 0;
         MapLocation[] locArray = new MapLocation[REASONABLE_MAX_EC];
 
         void add(MapLocation loc){
             if (isRunning) return;
             if (loc == null) return;
-            if (lastArrayElement >= REASONABLE_MAX_EC) return; //shouldnt happen
+            if (lastArrayElement >= REASONABLE_MAX_EC) return; //shouldn't happen
             if (ECLocs[loc.x%MAX_MAP_SIZE][loc.y%MAX_MAP_SIZE] == 0){
-                ECLocs[loc.x%MAX_MAP_SIZE][loc.y%MAX_MAP_SIZE] = lastArrayElement;
+                ECLocs[loc.x%MAX_MAP_SIZE][loc.y%MAX_MAP_SIZE] = lastArrayElement+1;
                 locArray[lastArrayElement++] = loc;
             }
         }
@@ -676,15 +733,59 @@ public class Communication {
 
     //other
 
-    int getMinDistToEC(MapLocation loc, int team){
-        int d = -1;
+    Integer getECDistDiff(MapLocation loc){
+        int minDistAlly = -1, minDistEnemy = -1;
         for (RInfo r = firstEC; r != null; r = r.nextInfo){
             if (r.getMapLocation() == null) continue;
-            if (r.team != team) continue;
-            int dist = r.getMapLocation().distanceSquaredTo(loc);
-            if (d < 0 || d < dist) d = dist;
+            if (r.team == myTeamIndex) {
+                int dist = r.getMapLocation().distanceSquaredTo(loc);
+                if (minDistAlly < 0 || minDistAlly > dist) minDistAlly = dist;
+            } else if (r.team == enemyTeamIndex){
+                int dist = r.getMapLocation().distanceSquaredTo(loc);
+                if (minDistEnemy < 0 || minDistEnemy > dist) minDistEnemy = dist;
+            }
         }
-        return d;
+        if (minDistAlly < 0 || minDistEnemy < 0) return null;
+        return minDistEnemy - minDistAlly;
+    }
+
+    MapLocation getClosestEnemyEC(){
+        MapLocation ans = null;
+        int minDist = -1;
+        for (RInfo r = firstEC; r != null; r = r.nextInfo){
+            if (r.getMapLocation() == null) continue;
+            if (r.team != rc.getTeam().opponent().ordinal()) continue;
+            int dist = r.getMapLocation().distanceSquaredTo(rc.getLocation());
+            if (minDist < 0 || minDist > dist){
+                minDist = dist;
+                ans = r.getMapLocation();
+            }
+        }
+        return ans;
+    }
+
+    MapLocation getClosestEC(){
+        MapLocation ans = null;
+        int minDist = -1;
+        for (RInfo r = firstEC; r != null; r = r.nextInfo){
+            if (r.getMapLocation() == null) continue;
+            if (r.team != rc.getTeam().ordinal()) continue;
+            int dist = r.getMapLocation().distanceSquaredTo(rc.getLocation());
+            if (minDist < 0 || minDist > dist){
+                minDist = dist;
+                ans = r.getMapLocation();
+            }
+        }
+        return ans;
+    }
+
+    boolean everythingCaptured(){
+        int cont = 0;
+        for (RInfo r = firstEC; r != null; r = r.nextInfo){
+            ++cont;
+            if (r.team ==enemyTeamIndex) return false;
+        }
+        return cont == ecMapLocations.lastArrayElement;
     }
 
 

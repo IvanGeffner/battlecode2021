@@ -1,4 +1,4 @@
-package secondbot;
+package seven;
 
 import battlecode.common.Clock;
 import battlecode.common.GameActionException;

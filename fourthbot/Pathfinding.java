@@ -1,4 +1,4 @@
-package secondbot;
+package fourthbot;
 
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;
@@ -49,7 +49,7 @@ public class Pathfinding {
             if (target == null) return;
             MapLocation myLoc = rc.getLocation();
             if (target.distanceSquaredTo(myLoc) <= 0) return;
-            rc.setIndicatorLine(myLoc, target, 0, 0, 255);
+            //rc.setIndicatorLine(myLoc, target, 0, 0, 255);
             Direction bestDir = null;
             double bestEstimation = 0;
             double firstStep = 1.0/rc.sensePassability(myLoc);

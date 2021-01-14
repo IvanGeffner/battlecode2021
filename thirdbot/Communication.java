@@ -1,4 +1,4 @@
-package ecobot;
+package thirdbot;
 
 import battlecode.common.*;
 
@@ -7,21 +7,29 @@ public class Communication {
     final int MAX_MAP_SIZE = GameConstants.MAP_MAX_HEIGHT;
     final int MAX_MAP_SIZE2 = 2*MAX_MAP_SIZE;
     final int MIN_ID = 10000;
-    final int BYTECODE_REMAINING = 2000;
+    final int BYTECODE_REMAINING = 6000;
+
+    final int BYTECODE_USED_UNITS = 3000;
 
     RobotController rc;
     int senseRadius;
     Team myTeam;
     boolean meEC;
 
+    int myTeamIndex, enemyTeamIndex;
+
     RInfo myEC = null;
     int currentFlag = 0;
+
+    final int messageTries = 16*3 + 2;
 
     Communication(RobotController rc){
         this.rc = rc;
         senseRadius = rc.getType().sensorRadiusSquared;
         myTeam = rc.getTeam();
         meEC = rc.getType() == RobotType.ENLIGHTENMENT_CENTER;
+        myTeamIndex = myTeam.ordinal();
+        enemyTeamIndex = myTeam.opponent().ordinal();
     }
 
     enum MType{
@@ -66,17 +74,19 @@ public class Communication {
         for (RInfo r = firstEC; r != null; r = r.nextInfo){
             MapLocation loc = r.getMapLocation();
             if (loc == null) continue;
-            rc.setIndicatorLine(rc.getLocation(), loc, 255, 0, 0);
+            if (r.team == myTeamIndex) rc.setIndicatorLine(rc.getLocation(), loc, 255, 0, 0);
+            else if (r.team == enemyTeamIndex) rc.setIndicatorLine(rc.getLocation(), loc, 0, 255, 0);
         }
     }
 
-    void readMessages(){ //TODO: cap bytecode expense per type
+    void readMessages(){
         try {
             if (running()) return;
 
             //visible robots
             RobotInfo[] visibleRobots = rc.senseNearbyRobots(senseRadius, myTeam);
             for (RobotInfo r : visibleRobots) {
+                if (Clock.getBytecodeNum() > BYTECODE_USED_UNITS) break;
                 int id = r.getID();
                 processMessage(rc.getFlag(id), checkECID(id));
             }
@@ -116,11 +126,11 @@ public class Communication {
             currentFlag = 0;
             mIndex.set();
             if (!meEC){
-                if (myEC != null) setFlagUnknown();
-                if (currentFlag == 0) setFlagNonEC();
+                if (myEC != null) setFlagUnknown(messageTries);
+                if (currentFlag == 0) setFlagNonEC(messageTries);
                 //else System.err.println("Unknown Message to ID " + myEC.id + ": " + currentFlag);
             }
-            else setFlagEC();
+            else setFlagEC(messageTries);
             rc.setFlag(currentFlag);
         } catch (Exception e){
             e.printStackTrace();
@@ -233,20 +243,22 @@ public class Communication {
         return myEC.id == id;
     }
 
-    void setFlagEC(){
+    void setFlagEC(int remainingTries){
+        if (remainingTries-- <= 0) return;
         Integer mes = mIndex.getFlag(false);
         if (mes == null){
             if (!mIndex.advance()) return;
-            setFlagEC();
+            setFlagEC(remainingTries);
         }
         else currentFlag = mes;
     }
 
-    void setFlagUnknown(){
+    void setFlagUnknown(int remainingTries){
+        if (remainingTries-- <= 0) return;
         Integer mes = mIndex.getFlag(true);
         if (mes == null){
             if (!mIndex.advance()) return;
-            setFlagUnknown();
+            setFlagUnknown(remainingTries);
         }
         else{
             //System.err.println("Got here with message " + mes);
@@ -254,12 +266,13 @@ public class Communication {
         }
     }
 
-    void setFlagNonEC(){
+    void setFlagNonEC(int remainingTries){
+        if (remainingTries-- <= 0) return;
         while (!mIndex.forNonEC()) if (!mIndex.advance()) return;
         Integer mes = mIndex.getFlag(false);
         if (mes == null){
             if (!mIndex.advance()) return;
-            setFlagNonEC();
+            setFlagNonEC(remainingTries);
         }
         else currentFlag = mes;
     }
@@ -617,16 +630,16 @@ public class Communication {
         int runningIndex = 0;
         boolean isRunning = true;
 
-        int REASONABLE_MAX_EC = 12;
+        int REASONABLE_MAX_EC = 24;
         int lastArrayElement = 0;
         MapLocation[] locArray = new MapLocation[REASONABLE_MAX_EC];
 
         void add(MapLocation loc){
             if (isRunning) return;
             if (loc == null) return;
-            if (lastArrayElement >= REASONABLE_MAX_EC) return; //shouldnt happen
+            if (lastArrayElement >= REASONABLE_MAX_EC) return; //shouldn't happen
             if (ECLocs[loc.x%MAX_MAP_SIZE][loc.y%MAX_MAP_SIZE] == 0){
-                ECLocs[loc.x%MAX_MAP_SIZE][loc.y%MAX_MAP_SIZE] = lastArrayElement;
+                ECLocs[loc.x%MAX_MAP_SIZE][loc.y%MAX_MAP_SIZE] = lastArrayElement+1;
                 locArray[lastArrayElement++] = loc;
             }
         }
@@ -676,15 +689,44 @@ public class Communication {
 
     //other
 
-    int getMinDistToEC(MapLocation loc, int team){
-        int d = -1;
+    Integer getECDistDiff(MapLocation loc){
+        int minDistAlly = -1, minDistEnemy = -1;
         for (RInfo r = firstEC; r != null; r = r.nextInfo){
             if (r.getMapLocation() == null) continue;
-            if (r.team != team) continue;
-            int dist = r.getMapLocation().distanceSquaredTo(loc);
-            if (d < 0 || d < dist) d = dist;
+            if (r.team == myTeamIndex) {
+                int dist = r.getMapLocation().distanceSquaredTo(loc);
+                if (minDistAlly < 0 || minDistAlly > dist) minDistAlly = dist;
+            } else if (r.team == enemyTeamIndex){
+                int dist = r.getMapLocation().distanceSquaredTo(loc);
+                if (minDistEnemy < 0 || minDistEnemy > dist) minDistEnemy = dist;
+            }
         }
-        return d;
+        if (minDistAlly < 0 || minDistEnemy < 0) return null;
+        return minDistEnemy - minDistAlly;
+    }
+
+    MapLocation getClosestEnemyEC(){
+        MapLocation ans = null;
+        int minDist = -1;
+        for (RInfo r = firstEC; r != null; r = r.nextInfo){
+            if (r.getMapLocation() == null) continue;
+            if (r.team != rc.getTeam().opponent().ordinal()) continue;
+            int dist = r.getMapLocation().distanceSquaredTo(rc.getLocation());
+            if (minDist < 0 || minDist > dist){
+                minDist = dist;
+                ans = r.getMapLocation();
+            }
+        }
+        return ans;
+    }
+
+    boolean everythingCaptured(){
+        int cont = 0;
+        for (RInfo r = firstEC; r != null; r = r.nextInfo){
+            ++cont;
+            if (r.team ==enemyTeamIndex) return false;
+        }
+        return cont == ecMapLocations.lastArrayElement;
     }
 
 

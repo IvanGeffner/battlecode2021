@@ -1,8 +1,12 @@
-package secondbot;
+package fifthbot;
 
-import battlecode.common.*;
+import battlecode.common.Direction;
+import battlecode.common.RobotController;
 
 public abstract class MyRobot {
+
+    final int EXPLORE_2_BYTECODE_REMAINING = 2000;
+
 
     static final Direction[] directions = {
             Direction.NORTH,
@@ -35,12 +39,12 @@ public abstract class MyRobot {
 
     void initTurn(){
         explore.initTurn();
-        if (rc.getType() == RobotType.SLANDERER) System.err.println("Bytecode after explore " + Clock.getBytecodeNum());
+        //if (rc.getType() == RobotType.SLANDERER) System.err.println("Bytecode after explore " + Clock.getBytecodeNum());
         comm.readMessages();
-        if (rc.getType() == RobotType.SLANDERER) System.err.println("Bytecode after reading " + Clock.getBytecodeNum());
+        //if (rc.getType() == RobotType.SLANDERER) System.err.println("Bytecode after reading " + Clock.getBytecodeNum());
         comm.setFlag();
-        if (rc.getType() == RobotType.SLANDERER) System.err.println("Bytecode after flag " + Clock.getBytecodeNum());
-        comm.debugDraw();
+        //if (rc.getType() == RobotType.SLANDERER) System.err.println("Bytecode after flag " + Clock.getBytecodeNum());
+        //comm.debugDraw();
     }
 
     void endTurn(){
@@ -52,9 +56,12 @@ public abstract class MyRobot {
     void explore(){
         path.move(explore.getExploreTarget());
     }
+    void explore2(){
+        path.move(explore.getExplore2Target(EXPLORE_2_BYTECODE_REMAINING));
+    }
 
-    void suicide(){
-        double a = Math.sqrt(-1);
+    boolean berserk(){
+        return explore.conquerorTurns >= 100 && rc.getRoundNum() > 700;
     }
 
 

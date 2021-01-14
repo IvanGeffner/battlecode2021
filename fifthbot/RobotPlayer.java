@@ -1,4 +1,4 @@
-package secondbot;
+package fifthbot;
 
 import battlecode.common.Clock;
 import battlecode.common.GameActionException;

@@ -1,0 +1,23 @@
+Secondbot:
+
+Comm:
+- (priority users)
+- (reconstruct from ID)
+
+Enlightment:
+- If win by votes is guaranteed, stop biding
+- Refactor build order
+- Build politicians to conquer neutral bases
+- Spawn in high passability tiles
+- Spawn 1 HP muckrakers if attacked
+- Redo politician HP
+
+Pathfinding:
+
+Slanderers:
+
+Politicians:
+- (suicide at base if worth)
+
+Muckrakers:
+- (Stick to high HP Politicians)

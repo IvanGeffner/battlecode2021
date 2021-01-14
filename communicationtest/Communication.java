@@ -9,8 +9,6 @@ public class Communication {
     final int MIN_ID = 10000;
     final int BYTECODE_REMAINING = 2000;
 
-    //TODO: only send known information to EC (implement unknown)
-
     RobotController rc;
     int senseRadius;
     Team myTeam;
@@ -120,9 +118,7 @@ public class Communication {
             if (!meEC){
                 if (myEC != null) setFlagUnknown();
                 if (currentFlag == 0) setFlagNonEC();
-                /*else{
-                    System.err.println("Unknown Message to ID " + myEC.id + ": " + currentFlag);
-                }*/
+                //else System.err.println("Unknown Message to ID " + myEC.id + ": " + currentFlag);
             }
             else setFlagEC();
             rc.setFlag(currentFlag);
@@ -176,7 +172,9 @@ public class Communication {
         }
         ri.locX = r.getLocation().x;
         ri.locY = r.getLocation().y;
-        if (myEC == null && r.getTeam() == rc.getTeam()) myEC = ri;
+        if (myEC == null && r.getTeam() == rc.getTeam()){
+            myEC = ri;
+        }
     }
 
     void exploredECSelf(){
@@ -277,7 +275,7 @@ public class Communication {
                 int id = getID(content);
                 if (idTracker.checkID(id)) return;
                 idTracker.addID(id);
-                RInfo ec = new RInfo(id, myTeam.ordinal(), true);
+                RInfo ec = new RInfo(id, myTeam.ordinal(), false);
                 addNonEC(ec);
                 return;
             case EC_ID:
@@ -289,7 +287,7 @@ public class Communication {
                     ec = new RInfo(id, getExtraElement(content), true);
                     addEC(ec);
                 }
-                ec.knownID |= (sentByMyEC);
+                ec.knownID |= sentByMyEC;
                 return;
             case EC_X:
                 id = getID(content);
@@ -298,7 +296,7 @@ public class Communication {
                 if (ec == null) return;
                 //System.err.println("Got info about x coordinate of " + id + " and it is " + getExtraElement(content));
                 ec.locX = getActualValue(rc.getLocation().x, getExtraElement(content));
-                ec.knownLocX |= (sentByMyEC);
+                ec.knownLocX |= sentByMyEC;
                 ecMapLocations.add(ec.getMapLocation());
                 return;
             case EC_Y:
@@ -307,7 +305,7 @@ public class Communication {
                 if (ec == null) return;
                 //System.err.println("Got info about y coordinate of " + id + " and it is " + getExtraElement(content));
                 ec.locY = getActualValue(rc.getLocation().y, getExtraElement(content));
-                ec.knownLocY |= (sentByMyEC);
+                ec.knownLocY |= sentByMyEC;
                 ecMapLocations.add(ec.getMapLocation());
                 return;
             case X:
@@ -533,7 +531,7 @@ public class Communication {
         }
     }
 
-     class BoundInfo {
+    class BoundInfo {
         int value;
         boolean known;
         BoundInfo(int value, boolean known){
@@ -675,4 +673,21 @@ public class Communication {
         }
 
     }
+
+    //other
+
+    int getMinDistToEC(MapLocation loc, int team){
+        int d = -1;
+        for (RInfo r = firstEC; r != null; r = r.nextInfo){
+            if (r.getMapLocation() == null) continue;
+            if (r.team != team) continue;
+            int dist = r.getMapLocation().distanceSquaredTo(loc);
+            if (d < 0 || d < dist) d = dist;
+        }
+        return d;
+    }
+
+
+
+
 }

@@ -1,4 +1,4 @@
-package secondbot;
+package fourthbot;
 
 import battlecode.common.*;
 
@@ -32,6 +32,8 @@ public class Politician extends MyRobot {
     boolean moved = false;
 
     Team myTeam, enemyTeam;
+    final double efficiencyThreshold = 0.75;
+    //boolean shouldBerserk = false;
 
     public Politician (RobotController rc){
         super(rc);
@@ -48,23 +50,27 @@ public class Politician extends MyRobot {
         }
         //politician
         tryAttack();
-        moveToEnemyBase();
-        if (!moved) explore();
+        MapLocation loc = getTarget();
+        if (loc != null) path.move(loc);
+        else explore2();
     }
 
     void tryAttack(){
         try {
+            //shouldBerserk = berserk();
             int efficiency = 0;
             int bestRange = -1;
             for (int attackRange : attackRanges) {
                 int e = getEfficiency(attackRange);
+                if (e == 0) continue;
                 //System.out.println("Efficiency at range " + attackRange + ": " + e);
                 if (e > efficiency) {
                     bestRange = attackRange;
                     efficiency = e;
                 }
             }
-            if (efficiency >= (rc.getConviction() - GameConstants.EMPOWER_TAX + 1)/2){
+            if (efficiency <= 0) return;
+            if (berserk() || efficiency >= minConviction()){
                 rc.empower(bestRange);
                 moved = true;
             }
@@ -73,13 +79,21 @@ public class Politician extends MyRobot {
         }
     }
 
+    double minConviction(){
+        double s = rc.getConviction() - GameConstants.EMPOWER_TAX;
+        return s*efficiencyThreshold;
+    }
+
+    int getAttackDamage(){
+        return (int)(rc.getEmpowerFactor(myTeam,0)*rc.getConviction()) - GameConstants.EMPOWER_TAX;
+    }
+
     //TODO it doesn't attack neutral units;
     int getEfficiency(int range){
         RobotInfo[] robots = rc.senseNearbyRobots(range);
         if (robots.length == 0) return 0;
-        int conv = (int)(rc.getEmpowerFactor(myTeam,0)*rc.getConviction());
-        if (conv <= GameConstants.EMPOWER_TAX) return 0;
-        conv -= GameConstants.EMPOWER_TAX;
+        int conv = getAttackDamage();
+        if (conv <= 0) return 0;
         int baseAttack = conv/robots.length;
         int res = conv%robots.length;
         if (res > 0 && res + GameConstants.EMPOWER_TAX >= robots.length) ++baseAttack;
@@ -91,26 +105,39 @@ public class Politician extends MyRobot {
             //if (r.getTeam() == myTeam) continue;
             int enemyConv = r.getConviction();
             switch(r.getType()){
-                case MUCKRAKER:
-                    if (enemyConv <= baseAttack) ans+= enemyConv + 1;
-                    break;
                 case ENLIGHTENMENT_CENTER:
                     ans += baseAttack;
                     break;
                 default:
-                    if (enemyConv < baseAttack) ans+= enemyConv + 1;
+                    if (enemyConv < baseAttack) ans+= Math.max(1, enemyConv) + 1;
             }
         }
         return ans;
     }
 
-    //rn we go to the closest one
-    void moveToEnemyBase(){
-        MapLocation loc = comm.getClosestEnemyEC();
-        if (loc != null){
-            moved = true;
-            path.move(loc);
+    MapLocation getTarget(){
+        MapLocation ans = getEfficientEnemy();
+        if (ans != null) return ans;
+        return comm.getClosestEnemyEC();
+    }
+
+    MapLocation getEfficientEnemy(){
+        MapLocation myLoc = rc.getLocation();
+        int ad = getAttackDamage();
+        MapLocation bestLoc = null;
+        int bestDist = 0;
+        RobotInfo[] robots = rc.senseNearbyRobots(rc.getType().sensorRadiusSquared, rc.getTeam().opponent());
+        for (RobotInfo r : robots){
+            int enemyConv = Math.max(1, r.getConviction());
+            if (enemyConv >= ad) continue;
+            if (enemyConv + 1 < minConviction()) continue;
+            int d = r.getLocation().distanceSquaredTo(myLoc);
+            if (bestLoc == null || bestDist > d){
+                bestDist = d;
+                bestLoc = r.getLocation();
+            }
         }
+        return bestLoc;
     }
 
 
@@ -191,7 +218,7 @@ public class Politician extends MyRobot {
             if (rc.getCooldownTurns() >= 1) return;
             if (farLocation != null) {
                 moved = true;
-                rc.setIndicatorDot(farLocation, 0, 0, 0);
+                //rc.setIndicatorDot(farLocation, 0, 0, 0);
                 path.move(farLocation);
             }
         }

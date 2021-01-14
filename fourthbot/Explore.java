@@ -1,8 +1,20 @@
-package secondbot;
+package fourthbot;
 
 import battlecode.common.*;
 
 public class Explore {
+
+    static final Direction[] directions = {
+            Direction.NORTH,
+            Direction.NORTHEAST,
+            Direction.EAST,
+            Direction.SOUTHEAST,
+            Direction.SOUTH,
+            Direction.SOUTHWEST,
+            Direction.WEST,
+            Direction.NORTHWEST,
+            Direction.CENTER
+    };
 
     static Direction[] dirPath;
 
@@ -19,6 +31,8 @@ public class Explore {
 
     MapLocation exploreTarget = null;
 
+    int conquerorTurns = 0;
+
     Communication comm;
 
     final int bytecodeUsed = 2500;
@@ -34,6 +48,14 @@ public class Explore {
     void initTurn(){
         checkBounds();
         checkRobots();
+        computeConquerorTurns();
+    }
+
+    void computeConquerorTurns(){
+        if (comm.everythingCaptured()) {
+            conquerorTurns++;
+        }
+        else conquerorTurns = 0;
     }
 
     void checkRobots(){
@@ -92,6 +114,30 @@ public class Explore {
         if (!initialized) emergencyTarget(10);
         else getNewTarget(10);
         return exploreTarget;
+    }
+
+    MapLocation getExplore2Target(int minBytecodeRemaining){
+        MapLocation myLoc = rc.getLocation();
+        RobotInfo[] robots = rc.senseNearbyRobots(rc.getType().sensorRadiusSquared, rc.getTeam());
+        int[] minDists = new int[directions.length];
+        for (RobotInfo r : robots){
+            if (Clock.getBytecodesLeft() < minBytecodeRemaining) break;
+            for (int i = directions.length; i-- > 0; ){
+                int dist = r.getLocation().distanceSquaredTo(myLoc.add(directions[i]));
+                int mindist = minDists[i];
+                if (mindist == 0 || mindist > dist) minDists[i] = dist;
+            }
+        }
+        Direction dir = Direction.CENTER;
+        int maxDist = minDists[Direction.CENTER.ordinal()];
+        for (int i = directions.length; i-- > 0; ){
+            if (!rc.canMove(directions[i])) continue;
+            if (maxDist < minDists[i]){
+                dir = directions[i];
+                maxDist = minDists[i];
+            }
+        }
+        return rc.getLocation().add(dir);
     }
 
     boolean hasVisited (MapLocation loc){

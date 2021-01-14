@@ -19,7 +19,7 @@ public class Enlightment extends MyRobot {
     public Enlightment(RobotController rc){
         super(rc);
     }
-    int min_round_bidding = 100;
+
     final int[] influences = new int[] {
             21,
             41,
@@ -61,7 +61,7 @@ public class Enlightment extends MyRobot {
     }
 
     void buildNewRobots(){
-        if (rc.getRobotCount() > 50) return;
+        if (rc.getRobotCount() > 70) return;
         NewRobot nr = getNewRobot();
         if (nr == null) return;
         if (!build(nr)) return;

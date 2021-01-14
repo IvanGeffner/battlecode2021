@@ -1,6 +1,7 @@
-package secondbot;
+package sixth;
 
 import battlecode.common.*;
+
 public class Muckraker extends MyRobot {
 
 
@@ -24,7 +25,7 @@ public class Muckraker extends MyRobot {
     public void play(){
         moved = false;
         tryKill();
-        if (moved) return;
+        tryMove();
         MapLocation loc = getTarget();
         if (loc != null) path.move(loc);
     }
@@ -48,17 +49,48 @@ public class Muckraker extends MyRobot {
         }
     }
 
+    void tryMove(){
+        if (moved) return;
+        MapLocation loc = getClosestSlanderer();
+        if (loc != null){
+            path.move(loc);
+            return;
+        }
+        if (myType == ATTACKER_TYPE){
+            if (surroundEnemyHQ()) return;
+        }
+        if (myType == EXPLORER_2_TYPE){
+            loc = explore.getExplore2Target(EXPLORE_2_BYTECODE_REMAINING);
+            if (loc != null){
+                path.move(loc);
+                return;
+            }
+        }
+
+        loc = explore.getExploreTarget();
+        if (loc != null){
+            path.move(loc);
+            return;
+        }
+
+        if (myType != ATTACKER_TYPE){
+            if (surroundEnemyHQ()) return;
+        }
+        explore2();
+    }
+
     MapLocation getTarget(){
         MapLocation loc = getClosestSlanderer();
         if (loc != null) return loc;
 
         if (myType == ATTACKER_TYPE){
-            loc = comm.getClosestEnemyEC();
+            loc = explore.getClosestEnemyEC();
+            //loc = comm.getClosestEnemyEC();
             if (loc != null) return loc;
         }
 
         if (myType == EXPLORER_2_TYPE){
-            loc = getExplore2Target();
+            loc = explore.getExplore2Target(EXPLORE_2_BYTECODE_REMAINING);
             if (loc != null) return loc;
         }
 
@@ -66,37 +98,14 @@ public class Muckraker extends MyRobot {
         if (loc != null) return loc;
 
         if (myType != ATTACKER_TYPE){
-            loc = comm.getClosestEnemyEC();
+            loc = explore.getClosestEnemyEC();
+            //loc = comm.getClosestEnemyEC();
             if (loc != null) return loc;
         }
 
-        loc = getExplore2Target();
+        loc = explore.getExplore2Target(EXPLORE_2_BYTECODE_REMAINING);
 
         return loc;
-    }
-
-    MapLocation getExplore2Target(){
-        MapLocation myLoc = rc.getLocation();
-        RobotInfo[] robots = rc.senseNearbyRobots(RobotType.MUCKRAKER.sensorRadiusSquared, myTeam);
-        int[] minDists = new int[directions.length];
-        for (RobotInfo r : robots){
-            if (Clock.getBytecodesLeft() < EXPLORE_2_BYTECODE_REMAINING) break;
-            for (int i = directions.length; i-- > 0; ){
-                int dist = r.getLocation().distanceSquaredTo(myLoc.add(directions[i]));
-                int mindist = minDists[i];
-                if (mindist == 0 || mindist > dist) minDists[i] = dist;
-            }
-        }
-        Direction dir = Direction.CENTER;
-        int maxDist = minDists[Direction.CENTER.ordinal()];
-        for (int i = directions.length; i-- > 0; ){
-            if (!rc.canMove(directions[i])) continue;
-            if (maxDist < minDists[i]){
-                dir = directions[i];
-                maxDist = minDists[i];
-            }
-        }
-        return rc.getLocation().add(dir);
     }
 
     MapLocation getClosestSlanderer(){

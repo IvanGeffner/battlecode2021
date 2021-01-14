@@ -1,12 +1,9 @@
-package secondbot;
+package thirdbot;
 
-import battlecode.common.Direction;
-import battlecode.common.GameConstants;
-import battlecode.common.RobotController;
-import battlecode.common.RobotType;
-
+import battlecode.common.*;
 public class Enlightment extends MyRobot {
 
+    //TODO: do not build slanderers if there are enemy muckrakers
 
     static final Direction[] directions = {
             Direction.NORTH,
@@ -30,7 +27,6 @@ public class Enlightment extends MyRobot {
     int currentType = 0;
 
     int politicianIndex = 1;
-    int bit = 0;
 
     public Enlightment(RobotController rc){
         super(rc);
@@ -45,28 +41,29 @@ public class Enlightment extends MyRobot {
             130,
             154,
             178,
-            203,
-            228,
-            255,
-            282,
-            310,
-            339,
-            368,
-            399,
-            431,
-            463,
-            497,
-            532,
-            568,
-            605,
-            643,
-            683,
-            724,
-            766,
-            810,
-            855,
-            902,
-            949
+            203
+            //,
+            //228,
+            //255,
+            //282,
+            //310,
+            //339,
+            //368,
+            //399,
+            //431,
+            //463,
+            //497,
+            //532,
+            //568,
+            //605,
+            //643,
+            //683,
+            //724,
+            //766,
+            //810,
+            //855,
+            //902,
+            //949
     };
 
 
@@ -109,36 +106,50 @@ public class Enlightment extends MyRobot {
 
     //TODO
     NewRobot getNewRobot(){
+        if (muckrackerNearby()) return getPolitician();
+        if (rc.getRobotCount() > 75){ //TODO fix this mess
+            while (typeOrder[currentType] == RobotType.MUCKRAKER) advanceUnitType();
+        }
         switch(typeOrder[currentType]) {
             case MUCKRAKER: return new NewRobot(RobotType.MUCKRAKER, 1);
             case SLANDERER:
                 int slandererInf = getBestInf(rc.getInfluence());
                 if (slandererInf > 0) return new NewRobot(RobotType.SLANDERER, slandererInf);
                 return null;
-            case POLITICIAN:
-                int politicianInf = getPoliticianInfluence();
-                if (politicianInf == 0 || politicianInf > rc.getInfluence()) return null;
-                return new NewRobot(RobotType.POLITICIAN, politicianInf);
+            case POLITICIAN: return getPolitician();
         }
         return null;
     }
 
-    int getPoliticianInfluence(){
-        for (; ;increasePoliticianIndex()) {
-            if (((1 << bit) & politicianIndex) > 0) return politicianInf(bit);
-        }
+    NewRobot getPolitician(){
+        int politicianInf = getPoliticianInfluence();
+        if (politicianInf == 0 || politicianInf > rc.getInfluence()) return null;
+        return new NewRobot(RobotType.POLITICIAN, politicianInf);
     }
 
-    void increasePoliticianIndex(){
-        ++bit;
-        if ((1 << bit) > politicianIndex){
-            bit = 0;
-            ++politicianIndex;
+    void advanceUnitType(){
+        currentType = (currentType + 1)%typeOrder.length;
+    }
+
+    boolean muckrackerNearby(){
+        RobotInfo[] robots = rc.senseNearbyRobots(RobotType.ENLIGHTENMENT_CENTER.sensorRadiusSquared, rc.getTeam().opponent());
+        for (RobotInfo r : robots){
+            if (r.getType() == RobotType.MUCKRAKER) return true;
         }
+        return false;
+    }
+
+
+    int getPoliticianInfluence(){
+        int bit = 0;
+        while ((politicianIndex & (1 << bit)) == 0){
+            ++bit;
+        }
+        return politicianInf(bit);
     }
 
     int politicianInf(int x){
-        return GameConstants.EMPOWER_TAX*(1 << x) + 1;
+        return GameConstants.EMPOWER_TAX*(x+1) + 2;
     }
 
 
@@ -149,8 +160,8 @@ public class Enlightment extends MyRobot {
                 if (rc.canBuildRobot(nr.robotType, dir, nr.influence)) {
                     rc.buildRobot(nr.robotType, dir, nr.influence);
                     if (raiseCounter){
-                        currentType = (currentType + 1)%typeOrder.length;
-                        if (nr.robotType == RobotType.POLITICIAN) increasePoliticianIndex();
+                        advanceUnitType();
+                        if (nr.robotType == RobotType.POLITICIAN) ++politicianIndex;
                     }
                     return true;
                 }
