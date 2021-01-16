@@ -1,0 +1,16 @@
+package nineb;
+
+import battlecode.common.MapLocation;
+
+public class Util {
+
+    static int SAFETY_DISTANCE_ENEMY_EC = 4;
+
+    static int SAFETY_DISTANCE_OUR_HQ = 8;
+
+    static int distance(MapLocation A, MapLocation B){
+        return Math.max(Math.abs(A.x - B.x), Math.abs(A.y - B.y));
+    }
+
+
+}
