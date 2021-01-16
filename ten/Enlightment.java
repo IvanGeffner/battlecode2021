@@ -241,7 +241,7 @@ public class Enlightment extends MyRobot {
             }
             //build a politician that kills the muckraker
             int politicianConviction = getConvictionToKillMuckraker(closestEnemyMuckraker.getConviction());
-            if (politicianConviction < rc.getConviction()) return new NewRobot(RobotType.MUCKRAKER, 1,false);
+            if (politicianConviction > rc.getConviction()) return new NewRobot(RobotType.MUCKRAKER, 1,false);
             return new NewRobot(RobotType.POLITICIAN, politicianConviction, closestEnemyMuckraker.getLocation(), false);
         }
 
