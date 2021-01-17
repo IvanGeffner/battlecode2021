@@ -6,12 +6,7 @@ Comm:
 
 Enlightment:
 - If win by votes is guaranteed, stop biding
-- [X] Refactor build order
-- [X] Build politicians to conquer neutral bases
-- [X] Spawn in high passability tiles
-- [X] Spawn 1 HP muckrakers if attacked
-- [X] Redo politician HP
-- optimize some closest locations for spawn
+- Bigger slanderers
 
 Pathfinding:
 
@@ -19,7 +14,10 @@ Slanderers:
 
 Politicians:
 - (suicide at base if worth)
-- Test doing strictly good trades
+- two tiers of units: units worth to kill instantly, units worth to kill 2x
+- if slanderers nearby, efficiency 2x
+- minimize distance to second closest muckraker
 
 Muckrakers:
 - (Stick to high HP Politicians)
+- better exploration

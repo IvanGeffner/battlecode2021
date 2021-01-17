@@ -1,4 +1,4 @@
-package ten;
+package elevenb;
 
 import battlecode.common.*;
 
@@ -22,6 +22,7 @@ public class Explore {
     static final int MAX_MAP_SIZE_SQ = MAX_MAP_SIZE*MAX_MAP_SIZE;
     static final int MAX_MAP_SIZE2 = 128;
     boolean[][] visited = new boolean[MAX_MAP_SIZE][];
+    //int[][] muckrakerLocations = new int[MAX_MAP_SIZE][];
     RobotController rc;
     int senseRadius;
     boolean initialized = false;
@@ -30,6 +31,11 @@ public class Explore {
     final int visitedBytecodeLeft = 100;
 
     MapLocation exploreTarget = null;
+
+    Direction exploreDir = Direction.CENTER;
+    double angle = 0;
+    final double angleOffset = 0.5;
+    Boolean rotateLeft = null;
 
     int conquerorTurns = 0;
 
@@ -46,12 +52,33 @@ public class Explore {
         senseRadius = rc.getType().sensorRadiusSquared;
         fillDirPath();
         Math.random(); //for some reason the first entry is buggy...
+        getExploreDir();
     }
 
     void initTurn(){
         checkBounds();
         checkRobots();
         computeConquerorTurns();
+    }
+
+
+    void getExploreDir(){
+        if (rc.getType() == RobotType.ENLIGHTENMENT_CENTER) return;
+        RobotInfo closestEC = null;
+        MapLocation myLoc = rc.getLocation();
+        RobotInfo[] robots = rc.senseNearbyRobots(RobotType.ENLIGHTENMENT_CENTER.actionRadiusSquared, rc.getTeam());
+        for (RobotInfo r : robots){
+            if (r.getType() != RobotType.ENLIGHTENMENT_CENTER) continue;
+            int d = myLoc.distanceSquaredTo(r.getLocation());
+            if (closestEC == null || d < myLoc.distanceSquaredTo(closestEC.getLocation())){
+                closestEC = r;
+            }
+        }
+        if (closestEC != null) exploreDir = closestEC.getLocation().directionTo(myLoc);
+        if (exploreDir != Direction.CENTER){
+            angle = Math.atan2(exploreDir.dy, exploreDir.dx);
+            angle += (Math.random()*2.0 - 1)*angleOffset;
+        }
     }
 
     void computeConquerorTurns(){
@@ -158,6 +185,67 @@ public class Explore {
             }
         }
         return rc.getLocation().add(dir);
+    }
+
+    MapLocation getExplore3Target(){
+        checkDirection();
+        double x = rc.getLocation().x, y = rc.getLocation().y;
+        x += Math.cos(angle)*100.0;
+        y += Math.sin(angle)*100.0;
+        return new MapLocation((int)x, (int)y);
+    }
+
+    void checkDirection(){
+        if (!movingOutOfMap(exploreDir)) return;
+        System.err.println("Checking new direction!");
+        double minCos = 0;
+        Direction newDir = null;
+        for (Direction dir : directions){
+            if (dir == Direction.CENTER) continue;
+            if (dir == exploreDir) continue;
+            if (movingOutOfMap(dir)) continue;
+            double cos = cosAngle(dir, exploreDir);
+            if (newDir == null || cos < minCos){
+                minCos = cos;
+                newDir = dir;
+            }
+        }
+        if (newDir != null){
+            System.err.println("Setting from direction " + exploreDir + " to direction " + newDir);
+            exploreDir = newDir;
+            angle = Math.atan2(exploreDir.dy, exploreDir.dx);
+        }
+    }
+
+    //todo this may be buggy
+    double cosAngle(Direction A, Direction B){
+        int a = A.ordinal(), b = B.ordinal();
+        if (a > b){
+            int aux = b;
+            b = a;
+            a = aux;
+        }
+        return Math.min(b - a, a + 8 - b);
+    }
+
+    boolean movingOutOfMap(Direction dir){
+        try {
+            MapLocation loc = rc.getLocation().add(dir);
+            if (!rc.onTheMap(loc)) {
+                return true;
+            }
+            loc = loc.add(dir);
+            if (!rc.onTheMap(loc)) {
+                return true;
+            }
+            loc = loc.add(dir);
+            if (!rc.onTheMap(loc)) {
+                return true;
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        return false;
     }
 
     boolean hasVisited (MapLocation loc){
