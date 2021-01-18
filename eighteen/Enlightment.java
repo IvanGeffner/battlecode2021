@@ -32,10 +32,10 @@ public class Enlightment extends MyRobot {
     void updateTypeProportions(){
         //int turnsAlive = rc.getRoundNum() - turnCreation;
         double turns = rc.getRoundNum();
-        typeProportions[TypeDescription.SLANDERER.ordinal()] = Math.max(2.5, 3.5 - turns/150);
-        typeProportions[TypeDescription.POLITICIAN.ordinal()] = Math.min(4.5, 2.0 + turns/150);
-        typeProportions[TypeDescription.BIG_POLITICIAN.ordinal()] = Math.min(2.5, 2.0 + turns/150);
-        typeProportions[TypeDescription.MUCKRAKER.ordinal()] = Math.max(2.5, 4.5 - turns/150);
+        typeProportions[TypeDescription.SLANDERER.ordinal()] = Math.max(2.5, 3.5 - turns/200);
+        typeProportions[TypeDescription.POLITICIAN.ordinal()] = Math.min(4.5, 2.0 + turns/100);
+        typeProportions[TypeDescription.BIG_POLITICIAN.ordinal()] = Math.min(2.5, 2.0 + turns/100);
+        typeProportions[TypeDescription.MUCKRAKER.ordinal()] = Math.max(2.5, 4.5 - turns/100);
     }
 
     //Util: default order (TODO: optimize this, make this adaptive?)
@@ -74,8 +74,8 @@ public class Enlightment extends MyRobot {
     boolean localSafe = false;
     int lastTurnEnemy = -100;
     int turnCreation;
-    final int MIN_TURNS_SAFE = 25;
-    final int MIN_TURNS_WITHOUT_ENEMY = 10;
+    final int MIN_TURNS_SAFE = 40;
+    final int MIN_TURNS_WITHOUT_ENEMY = 20;
 
     final int SAFE_CONVICTION = 4;
 
@@ -495,8 +495,7 @@ public class Enlightment extends MyRobot {
         return politicianInf(bit);
     }
 
-    final int[] poliTiers = new int[] {14, 16, 20, 26, 44, 54};
-            //54, 80, 110};
+    final int[] poliTiers = new int[] {16, 16, 24, 38, 56, 78};
 
     int politicianInf(int tier){
         int ans = 0;

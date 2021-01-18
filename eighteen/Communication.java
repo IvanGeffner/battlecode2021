@@ -9,7 +9,7 @@ public class Communication {
     final int MIN_ID = 10000;
     final int BYTECODE_REMAINING = 6000;
 
-    final int BYTECODE_USED_UNITS = 4000;
+    final int BYTECODE_USED_UNITS = 3500;
 
     RobotController rc;
     int senseRadius;

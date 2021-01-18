@@ -58,7 +58,7 @@ public class Pathfinding {
     }
 
     public void move(MapLocation loc){
-        System.err.println("Before pathfinding " + Clock.getBytecodeNum());
+        //System.err.println("Before pathfinding " + Clock.getBytecodeNum());
         if (rc.getCooldownTurns() >= 1) return;
         target = loc;
         if (target == null) return;

@@ -44,7 +44,7 @@ public class Politician extends MyRobot {
     static Team myTeam, enemyTeam;
     static final double efficiencyMuckraker = 1.5;
 
-    final static int KILL_BONUS = 5;
+    final static int KILL_BONUS = 6;
     final static int STRONG_THRESHOLD = 20;
 
     boolean explorer = false;
@@ -469,7 +469,7 @@ public class Politician extends MyRobot {
 
         final int MUCKRAKER_MEMORY = 10;
 
-        final int fleeBytecode = 1200;
+        final int fleeBytecode = 1500;
         final double muckrakerActionDist = RobotType.MUCKRAKER.actionRadiusSquared;
 
         MapLocation farLocation = null;
@@ -488,7 +488,7 @@ public class Politician extends MyRobot {
                 return;
             }
 
-            System.err.println("After trying to go away " + Clock.getBytecodeNum());
+            //System.err.println("After trying to go away " + Clock.getBytecodeNum());
 
             //if (moveFar()) return;
             if (moveToLattice()){
@@ -496,14 +496,14 @@ public class Politician extends MyRobot {
                 return;
             }
 
-            System.err.println("After trying to move to lattice " + Clock.getBytecodeNum());
+            //System.err.println("After trying to move to lattice " + Clock.getBytecodeNum());
 
             if (surroundOurHQ(Util.SAFETY_DISTANCE_OUR_HQ)){
                 //System.err.println("Moving around HQ");
                 return;
             }
 
-            System.err.println("After surrounding my HQ" + Clock.getBytecodeNum());
+            //System.err.println("After surrounding my HQ" + Clock.getBytecodeNum());
 
             //System.err.println("Exploring");
             //explore();
@@ -516,7 +516,7 @@ public class Politician extends MyRobot {
                 int minDist[] = computeMinDistsToMuckraker();
                 if (minDist[0] == 0) return false;
 
-                double minValue = minDist[Direction.CENTER.ordinal()];
+                int minValue = minDist[Direction.CENTER.ordinal()];
                 double bestValue = 0;
                 Direction bestDir = null;
 
@@ -524,8 +524,7 @@ public class Politician extends MyRobot {
                     Direction dir = directions[i];
                     if (dir == Direction.CENTER) continue;
                     if (!rc.canMove(dir)) continue;
-                    if (minDist[i] <= minValue) continue;
-                    double value = getFleeValue(minDist[i], rc.sensePassability(myLoc.add(dir)));
+                    double value = getFleeValue(minDist[i] - minValue, rc.sensePassability(myLoc.add(dir)));
                     if (bestDir == null || value > bestValue){
                         bestValue = value;
                         bestDir = dir;
@@ -534,7 +533,6 @@ public class Politician extends MyRobot {
                 if (bestDir != null){
                     moved = true;
                     if (bestDir != Direction.CENTER) rc.move(bestDir);
-                    System.err.println("Fleeing in direction " + bestDir);
                     return true;
                 }
             } catch (Exception e){
@@ -544,18 +542,10 @@ public class Politician extends MyRobot {
         }
 
         double getFleeValue(int muckrakerDist, double p){
-            double dif = muckrakerDist - muckrakerActionDist;
+            //double dif = muckrakerDist - muckrakerActionDist;
+            double dif = muckrakerDist;
             if (dif <= 0) return 0;
-            return (p+0.1)*dif;
-        }
-
-        void checkLoc(MapLocation loc){
-            Integer d = comm.getECDistDiff(loc);
-            if (d == null) return;
-            if (farValue == null || d > farValue){
-                farValue = d;
-                farLocation = loc;
-            }
+            return (p+0.01)*dif;
         }
 
         int[] computeMinDistsToMuckraker(){
@@ -565,7 +555,7 @@ public class Politician extends MyRobot {
             RobotInfo[] robots = rc.senseNearbyRobots(RobotType.SLANDERER.sensorRadiusSquared, enemyTeam);
             for (RobotInfo r : robots){
                 if (Clock.getBytecodesLeft() < fleeBytecode){
-                    System.err.println("Not enough bytecode!!");
+                    //System.err.println("Not enough bytecode!!");
                     return muckDists;
                 }
                 if (r.getType() != RobotType.MUCKRAKER) continue;
@@ -609,8 +599,8 @@ public class Politician extends MyRobot {
         }
 
         MapLocation bestLatticeLoc = null;
-        final int MIN_LATTICE_DIST = 5;
-        final int MAX_BYTECODE_REMAINING = 1200;
+        static final int MIN_LATTICE_DIST = 5;
+        static final int MAX_BYTECODE_REMAINING = 1500;
 
         boolean moveToLattice() {
             try {
@@ -644,7 +634,7 @@ public class Politician extends MyRobot {
                 }
                 if (bestLoc != null){
                     path.move(bestLoc);
-                    rc.setIndicatorLine(rc.getLocation(), bestLoc, 0, 0, 0 );
+                    //rc.setIndicatorLine(rc.getLocation(), bestLoc, 0, 0, 0 );
                     return true;
                 }
             } catch (Exception e){

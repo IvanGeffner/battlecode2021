@@ -39,16 +39,16 @@ public abstract class MyRobot {
     void initTurn(){
         path.initTurn();
         explore.initTurn();
-        if (rc.getType() == RobotType.SLANDERER) System.err.println("Bytecode after explore " + Clock.getBytecodeNum());
+        //if (rc.getType() == RobotType.SLANDERER) System.err.println("Bytecode after explore " + Clock.getBytecodeNum());
         comm.readMessages();
-        if (rc.getType() == RobotType.SLANDERER) System.err.println("Bytecode after reading " + Clock.getBytecodeNum());
+        //if (rc.getType() == RobotType.SLANDERER) System.err.println("Bytecode after reading " + Clock.getBytecodeNum());
         comm.setFlag();
-        if (rc.getType() == RobotType.SLANDERER) System.err.println("Bytecode after flag " + Clock.getBytecodeNum());
+        //if (rc.getType() == RobotType.SLANDERER) System.err.println("Bytecode after flag " + Clock.getBytecodeNum());
         //comm.debugDraw();
     }
 
     void endTurn(){
-        if (rc.getType() == RobotType.SLANDERER) System.err.println("Bytecode after running turn " + Clock.getBytecodeNum());
+        //if (rc.getType() == RobotType.SLANDERER) System.err.println("Bytecode after running turn " + Clock.getBytecodeNum());
         comm.run();
         explore.initialize();
         if (rc.getType() != RobotType.SLANDERER) explore.markSeen();
