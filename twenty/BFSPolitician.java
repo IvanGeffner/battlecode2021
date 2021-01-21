@@ -2,29 +2,10 @@ package twenty;
 
 import battlecode.common.*;
 
-public class BFSPolitician implements BFSInterface {
-
-    static RobotController rc;
-    static Explore explore;
+public class BFSPolitician extends BFS {
 
     BFSPolitician(RobotController rc, Explore explore){
-        BFSPolitician.rc = rc;
-        BFSPolitician.explore = explore;
-    }
-
-    public void move(MapLocation target){
-        if (target == null) return;
-        if (rc.getCooldownTurns() >= 1) return;
-        if (rc.getLocation().distanceSquaredTo(target) == 0) return;
-
-        int bytecode = Clock.getBytecodeNum();
-
-        Direction dir = getBestDir(target);
-        if (dir != null){
-            explore.move(dir);
-        }
-
-        System.err.println("Bytecode used: " + bytecode);
+        super(rc, explore);
     }
 
     static MapLocation l19;

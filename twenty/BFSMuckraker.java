@@ -2,25 +2,10 @@ package twenty;
 
 import battlecode.common.*;
 
-public class BFSMuckraker implements BFSInterface {
-
-    static RobotController rc;
-    static Explore explore;
+public class BFSMuckraker extends BFS {
 
     BFSMuckraker(RobotController rc, Explore explore){
-        BFSMuckraker.rc = rc;
-        BFSMuckraker.explore = explore;
-    }
-
-    public void move(MapLocation target){
-        if (target == null) return;
-        if (rc.getCooldownTurns() >= 1) return;
-        if (rc.getLocation().distanceSquaredTo(target) == 0) return;
-
-        Direction dir = getBestDir(target);
-        if (dir != null){
-            explore.move(dir);
-        }
+        super(rc, explore);
     }
 
 
@@ -2896,7 +2881,7 @@ public class BFSMuckraker implements BFSInterface {
             }
             double dist151 = (initialDist - Math.sqrt(l151.distanceSquaredTo(target))) / v151;
             if (dist151 > bestEstimation) {
-                bestEstimation = dist151;
+                //bestEstimation = dist151;
                 ans = d151;
             }
             return ans;

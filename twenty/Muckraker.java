@@ -21,7 +21,6 @@ public class Muckraker extends MyRobot {
 
     public Muckraker(RobotController rc){
         super(rc);
-        bfs = new BFSMuckraker(rc, explore);
         myType = (int)(Math.random()*3.0);
         if (rc.getConviction() > 1) {
             myType = (int)(Math.random()*2.0);

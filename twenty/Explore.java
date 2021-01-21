@@ -36,10 +36,10 @@ public class Explore {
 
     Direction exploreDir = Direction.CENTER;
     double angle = 0;
-    final double angleOffset = 0.5;
-    final double exploreDist = 12;
-    MapLocation explore3Target = null;
-    final int exploreMinDist = 2;
+    //final double angleOffset = 0.5;
+    final double exploreDist = 100;
+    //MapLocation explore3Target = null;
+    //final int exploreMinDist = 2;
     Boolean rotateLeft = null;
 
     int conquerorTurns = 0;
@@ -88,17 +88,17 @@ public class Explore {
         else exploreDir = directions[(int)(Math.random()*8)];
         if (exploreDir != Direction.CENTER){
             angle = Math.atan2(exploreDir.dy, exploreDir.dx);
-            angle += (Math.random()*2.0 - 1)*angleOffset;
-            updateExplore3Target();
+            //angle += (Math.random()*2.0 - 1)*angleOffset;
+            //updateExplore3Target();
         }
     }
 
-    void updateExplore3Target(){
+    /*void updateExplore3Target(){
         double x = rc.getLocation().x, y = rc.getLocation().y;
         x += Math.cos(angle)*exploreDist;
         y += Math.sin(angle)*exploreDist;
         explore3Target =  new MapLocation((int)x, (int)y);
-    }
+    }*/
 
     /*void computeConquerorTurns(){
         if (comm.everythingCaptured()) {
@@ -212,17 +212,21 @@ public class Explore {
 
     MapLocation getExplore3Target(){
         checkDirection();
-        checkLocation();
-        return explore3Target;
+        //checkLocation();
+        //return explore3Target;
+        double x = rc.getLocation().x, y = rc.getLocation().y;
+        x += Math.cos(angle)*exploreDist;
+        y += Math.sin(angle)*exploreDist;
+        return new MapLocation((int)x, (int)y);
     }
 
-    void checkLocation(){
+    /*void checkLocation(){
         if (rc.getLocation().distanceSquaredTo(explore3Target) <= exploreMinDist) updateExplore3Target();
-    }
+    }*/
 
     void checkDirection(){
-        Direction actualDir = rc.getLocation().directionTo(explore3Target);
-        if (!movingOutOfMap(actualDir)) return;
+        //Direction actualDir = rc.getLocation().directionTo(explore3Target);
+        if (!movingOutOfMap(exploreDir)) return;
         System.err.println("Checking new direction!");
         double minCos = 0;
         Direction newDir = null;
@@ -240,7 +244,7 @@ public class Explore {
             System.err.println("Setting from direction " + exploreDir + " to direction " + newDir);
             exploreDir = newDir;
             angle = Math.atan2(exploreDir.dy, exploreDir.dx);
-            updateExplore3Target();
+            //updateExplore3Target();
         }
     }
 

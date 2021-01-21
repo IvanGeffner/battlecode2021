@@ -23,8 +23,7 @@ public abstract class MyRobot {
     };
 
     RobotController rc;
-    Pathfinding path;
-    BFSInterface bfs;
+    BFS bfs;
     Explore explore;
     Communication comm;
     int creationRound;
@@ -32,16 +31,23 @@ public abstract class MyRobot {
 
     public MyRobot(RobotController rc){
         this.rc = rc;
-        path = new Pathfinding(rc);
         comm = new Communication(rc);
         explore = new Explore(rc, comm);
         creationRound = rc.getRoundNum();
+        switch(rc.getType()){
+            case MUCKRAKER:
+                bfs = new BFSMuckraker(rc, explore);
+                break;
+            default:
+                bfs = new BFSPolitician(rc, explore);
+                break;
+        }
     }
 
     abstract void play();
 
     void initTurn(){
-        path.initTurn();
+        bfs.initTurn();
         explore.initTurn();
         //if (rc.getType() == RobotType.SLANDERER) System.err.println("Bytecode after explore " + Clock.getBytecodeNum());
         comm.readMessages();
@@ -52,21 +58,9 @@ public abstract class MyRobot {
     }
 
     void endTurn(){
-        //if (rc.getType() == RobotType.SLANDERER) System.err.println("Bytecode after running turn " + Clock.getBytecodeNum());
         comm.run();
         explore.initialize();
         if (rc.getType() != RobotType.SLANDERER) explore.markSeen();
-    }
-
-    void explore(){
-        path.move(explore.getExploreTarget());
-    }
-    void explore2(){
-        path.move(explore.getExplore2Target(EXPLORE_2_BYTECODE_REMAINING));
-    }
-
-    boolean berserk(){
-        return explore.conquerorTurns >= 100 && rc.getRoundNum() > 700;
     }
 
     boolean surroundEnemyHQ(){
@@ -75,12 +69,16 @@ public abstract class MyRobot {
         int d = rc.getLocation().distanceSquaredTo(loc);
         d = Math.min(d, Util.SAFETY_DISTANCE_ENEMY_EC);
         boolean[] imp = new boolean[directions.length];
+        boolean greedy = rc.getType() == RobotType.SLANDERER;
         for (int i = directions.length; i-- > 0; ){
             MapLocation newLoc = rc.getLocation().add(directions[i]);
-            if (newLoc.distanceSquaredTo(loc) <= d) imp[i] = true;
+            if (newLoc.distanceSquaredTo(loc) <= d){
+                imp[i] = true;
+                greedy = true;
+            }
         }
-        path.setImpassable(imp);
-        path.move(loc);
+        bfs.path.setImpassable(imp);
+        bfs.move(loc, greedy);
         return true;
     }
 
@@ -90,12 +88,14 @@ public abstract class MyRobot {
         int d = rc.getLocation().distanceSquaredTo(loc);
         d = Math.min(d, rad);
         boolean[] imp = new boolean[directions.length];
+        boolean greedy = rc.getType() == RobotType.SLANDERER;
         for (int i = directions.length; i-- > 0; ){
             MapLocation newLoc = rc.getLocation().add(directions[i]);
             if (newLoc.distanceSquaredTo(loc) <= d) imp[i] = true;
+            greedy = true;
         }
-        path.setImpassable(imp);
-        path.move(loc);
+        bfs.path.setImpassable(imp);
+        bfs.move(loc, greedy);
         return true;
     }
 

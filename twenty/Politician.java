@@ -20,6 +20,8 @@ public class Politician extends MyRobot {
     int PROTECT_TURNS = 30 + 10;
     int turnCreation = 0;
 
+    int MAX_BYTECODE_SEARCH = 9500;
+
     static final Direction[] dirPathSlanderer = new Direction[]{Direction.NORTHWEST, Direction.NORTHWEST, Direction.NORTH, Direction.NORTH, Direction.NORTH, Direction.NORTH, Direction.NORTHEAST, Direction.NORTHEAST, Direction.EAST, Direction.EAST, Direction.EAST, Direction.EAST, Direction.SOUTHEAST, Direction.SOUTHEAST, Direction.SOUTH, Direction.SOUTH, Direction.SOUTH, Direction.SOUTH, Direction.SOUTHWEST, Direction.SOUTHWEST, Direction.WEST, Direction.WEST, Direction.WEST, Direction.NORTHWEST, Direction.NORTHWEST, Direction.NORTH, Direction.NORTH, Direction.NORTH, Direction.NORTH, Direction.NORTHEAST, Direction.EAST, Direction.EAST, Direction.EAST, Direction.EAST, Direction.SOUTHEAST, Direction.SOUTH, Direction.SOUTH, Direction.SOUTH, Direction.SOUTH, Direction.SOUTHWEST, Direction.WEST, Direction.WEST, Direction.WEST, Direction.NORTHWEST, Direction.NORTH, Direction.NORTH, Direction.NORTH, Direction.NORTH, Direction.EAST, Direction.EAST, Direction.EAST, Direction.EAST, Direction.SOUTH, Direction.SOUTH, Direction.SOUTH, Direction.SOUTH, Direction.WEST, Direction.WEST, Direction.WEST, Direction.NORTH, Direction.NORTH, Direction.NORTH, Direction.EAST, Direction.EAST, Direction.SOUTH, Direction.SOUTH, Direction.WEST, Direction.NORTH, Direction.CENTER};
 
 
@@ -56,7 +58,6 @@ public class Politician extends MyRobot {
 
     public Politician (RobotController rc){
         super(rc);
-        bfs = new BFSPolitician(rc, explore);
         myTeam = rc.getTeam();
         enemyTeam = myTeam.opponent();
         turnCreation = rc.getRoundNum();
@@ -331,7 +332,12 @@ public class Politician extends MyRobot {
         }
 
         if (surroundEnemyHQ()) return;
-        explore();
+
+
+        ans = explore.getExploreTarget();
+        if (ans != null){
+            bfs.move(ans);
+        }
     }
 
     boolean tryProtect(){
@@ -460,20 +466,22 @@ public class Politician extends MyRobot {
         int bestDist = 0;
         RobotInfo[] robots = rc.senseNearbyRobots(rc.getType().sensorRadiusSquared, rc.getTeam().opponent());
         for (RobotInfo r : robots){
+            if (Clock.getBytecodeNum() > MAX_BYTECODE_SEARCH) break;
             double e = getEfficiency(r.getType(), r.getConviction(), r.getInfluence());
             if (e < rc.getConviction()) continue;
-            int d = r.getLocation().distanceSquaredTo(myLoc);
+            MapLocation adjLoc = getBestAdjacent(r.getLocation());
+            int d = r.getLocation().distanceSquaredTo(adjLoc);
             if (bestLoc == null || bestDist > d){
                 bestDist = d;
-                bestLoc = r.getLocation();
+                bestLoc = adjLoc;
             }
         }
-        if (bestLoc != null) return bestLoc;
 
+        if (bestLoc != null) return bestLoc;
         //TODO
 
         for (Communication.RInfo r = comm.firstNonEC; r != null; r = r.nextInfo){
-            if (Clock.getBytecodesLeft() < MAX_BYTECODE_REMAINING) return bestLoc;
+            if (Clock.getBytecodeNum() > MAX_BYTECODE_SEARCH) return bestLoc;
             MapLocation loc = r.getMapLocation();
             if (loc == null) continue;
             rc.setIndicatorDot(loc, 0, 255, 0);
@@ -486,6 +494,73 @@ public class Politician extends MyRobot {
             }
         }
         return bestLoc;
+    }
+
+    MapLocation getBestAdjacent(MapLocation loc){
+
+        try {
+
+            MapLocation myLoc = rc.getLocation();
+
+            MapLocation ans = loc;
+            Integer bestDist = null;
+
+            MapLocation newLoc = loc.add(Direction.NORTH);
+            if (rc.canSenseLocation(newLoc)) {
+                if (rc.onTheMap(newLoc)) {
+                    if (!rc.isLocationOccupied(newLoc)) {
+                        int d = myLoc.distanceSquaredTo(newLoc);
+                        if (bestDist == null || d < bestDist){
+                            bestDist = d;
+                            ans = newLoc;
+                        }
+                    }
+                }
+            }
+
+            newLoc = loc.add(Direction.WEST);
+            if (rc.canSenseLocation(newLoc)) {
+                if (rc.onTheMap(newLoc)) {
+                    if (!rc.isLocationOccupied(newLoc)) {
+                        int d = myLoc.distanceSquaredTo(newLoc);
+                        if (bestDist == null || d < bestDist){
+                            bestDist = d;
+                            ans = newLoc;
+                        }
+                    }
+                }
+            }
+
+            newLoc = loc.add(Direction.EAST);
+            if (rc.canSenseLocation(newLoc)) {
+                if (rc.onTheMap(newLoc)) {
+                    if (!rc.isLocationOccupied(newLoc)) {
+                        int d = myLoc.distanceSquaredTo(newLoc);
+                        if (bestDist == null || d < bestDist){
+                            bestDist = d;
+                            ans = newLoc;
+                        }
+                    }
+                }
+            }
+
+            newLoc = loc.add(Direction.SOUTH);
+            if (rc.canSenseLocation(newLoc)) {
+                if (rc.onTheMap(newLoc)) {
+                    if (!rc.isLocationOccupied(newLoc)) {
+                        int d = myLoc.distanceSquaredTo(newLoc);
+                        if (bestDist == null || d < bestDist){
+                            //bestDist = d;
+                            ans = newLoc;
+                        }
+                    }
+                }
+            }
+            if (ans != null) return ans;
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        return loc;
     }
 
     boolean weak(){
@@ -521,21 +596,12 @@ public class Politician extends MyRobot {
             }
 
             if (moveToLattice()){
-                //System.err.println("Moved to lattice");
                 return;
             }
-
-            //System.err.println("After trying to move to lattice " + Clock.getBytecodeNum());
 
             if (surroundOurHQ(Util.SAFETY_DISTANCE_OUR_HQ)){
-                //System.err.println("Moving around HQ");
                 return;
             }
-
-            //System.err.println("After surrounding my HQ" + Clock.getBytecodeNum());
-
-            //System.err.println("Exploring");
-            //explore();
         }
 
         boolean flee(){
@@ -664,7 +730,7 @@ public class Politician extends MyRobot {
                     }
                 }
                 if (bestLoc != null){
-                    path.move(bestLoc);
+                    bfs.move(bestLoc, true);
                     //rc.setIndicatorLine(rc.getLocation(), bestLoc, 0, 0, 0 );
                     return true;
                 }

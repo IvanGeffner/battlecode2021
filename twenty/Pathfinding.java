@@ -11,6 +11,7 @@ public class Pathfinding {
     double avgImpassabilityInv = 10;
 
     BugNav bugNav = new BugNav();
+    Explore explore;
 
     static final Direction[] directions = {
             Direction.NORTH,
@@ -41,8 +42,9 @@ public class Pathfinding {
     }
 
 
-    Pathfinding(RobotController rc){
+    Pathfinding(RobotController rc, Explore explore){
         this.rc = rc;
+        this.explore = explore;
     }
 
     double getEstimation (MapLocation loc){
