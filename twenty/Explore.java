@@ -2,6 +2,8 @@ package twenty;
 
 import battlecode.common.*;
 
+import java.util.Map;
+
 public class Explore {
 
     static final Direction[] directions = {
@@ -38,7 +40,7 @@ public class Explore {
     double angle = 0;
     //final double angleOffset = 0.5;
     final double exploreDist = 100;
-    //MapLocation explore3Target = null;
+    MapLocation explore3Target = null;
     //final int exploreMinDist = 2;
     Boolean rotateLeft = null;
 
@@ -83,14 +85,14 @@ public class Explore {
             }
         }
         if (closestEC != null){
-            exploreDir = closestEC.getLocation().directionTo(myLoc);
+            assignExplore3Dir(closestEC.getLocation().directionTo(myLoc));
         }
-        else exploreDir = directions[(int)(Math.random()*8)];
-        if (exploreDir != Direction.CENTER){
+        else assignExplore3Dir(directions[(int)(Math.random()*8)]);
+        /*if (exploreDir != Direction.CENTER))
             angle = Math.atan2(exploreDir.dy, exploreDir.dx);
             //angle += (Math.random()*2.0 - 1)*angleOffset;
             //updateExplore3Target();
-        }
+        }*/
     }
 
     /*void updateExplore3Target(){
@@ -212,12 +214,13 @@ public class Explore {
 
     MapLocation getExplore3Target(){
         checkDirection();
+        return explore3Target;
         //checkLocation();
         //return explore3Target;
-        double x = rc.getLocation().x, y = rc.getLocation().y;
-        x += Math.cos(angle)*exploreDist;
-        y += Math.sin(angle)*exploreDist;
-        return new MapLocation((int)x, (int)y);
+        //double x = rc.getLocation().x, y = rc.getLocation().y;
+        //x += Math.cos(angle)*exploreDist;
+        //y += Math.sin(angle)*exploreDist;
+        //return new MapLocation((int)x, (int)y);
     }
 
     /*void checkLocation(){
@@ -239,12 +242,16 @@ public class Explore {
     void assignExplore3Dir(Direction dir){
         exploreDir = dir;
         angle = Math.atan2(exploreDir.dy, exploreDir.dx);
+        double x = rc.getLocation().x, y = rc.getLocation().y;
+        x += Math.cos(angle)*exploreDist;
+        y += Math.sin(angle)*exploreDist;
+        explore3Target = new MapLocation((int)x, (int)y);
     }
 
     void checkDirection(){
         //Direction actualDir = rc.getLocation().directionTo(explore3Target);
         if (!movingOutOfMap(exploreDir)) return;
-        System.err.println("Checking new direction!");
+        //System.err.println("Checking new direction!");
         switch(exploreDir){
             case SOUTHEAST:
             case NORTHEAST:
