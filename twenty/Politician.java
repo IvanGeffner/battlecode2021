@@ -320,7 +320,7 @@ public class Politician extends MyRobot {
 
         Communication.RInfo nEC = comm.getClosestNeutralEC(getAttackDamage());
         if (nEC != null && nEC.getMapLocation() != null){
-            bfs.move(nEC.getMapLocation());
+            bfs.move(getBestAdjacent(nEC.getMapLocation()));
             return;
         }
         if (!weak()){
@@ -457,8 +457,6 @@ public class Politician extends MyRobot {
         if (myAttackDamage > conv) bonusKill = GameConstants.EMPOWER_TAX + KILL_BONUS;
         return ef*Math.min(myAttackDamage, maxInf) + bonusKill;
     }
-
-    final int MAX_BYTECODE_REMAINING = 2500;
 
     MapLocation getEfficientEnemy(){
         MapLocation myLoc = rc.getLocation();

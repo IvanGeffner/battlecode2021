@@ -224,11 +224,67 @@ public class Explore {
         if (rc.getLocation().distanceSquaredTo(explore3Target) <= exploreMinDist) updateExplore3Target();
     }*/
 
+    int eastCloser(){
+        Integer ux = comm.getBound(comm.ubX), lx = comm.getBound(comm.lbX);
+        if (ux == null || lx == null) return 0;
+        return  ux - rc.getLocation().x <= rc.getLocation().x - lx ?  1 : -1;
+    }
+
+    int northCloser(){
+        Integer uy = comm.getBound(comm.ubY), ly = comm.getBound(comm.lbY);
+        if (uy == null || ly == null) return 0;
+        return  uy - rc.getLocation().y <= rc.getLocation().y - ly ? 1 : -1;
+    }
+
+    void assignExplore3Dir(Direction dir){
+        exploreDir = dir;
+        angle = Math.atan2(exploreDir.dy, exploreDir.dx);
+    }
+
     void checkDirection(){
         //Direction actualDir = rc.getLocation().directionTo(explore3Target);
         if (!movingOutOfMap(exploreDir)) return;
         System.err.println("Checking new direction!");
-        double minCos = 0;
+        switch(exploreDir){
+            case SOUTHEAST:
+            case NORTHEAST:
+            case NORTHWEST:
+            case SOUTHWEST:
+                getClosestExplore3Direction();
+                return;
+            case NORTH:
+            case SOUTH:
+                int east = eastCloser();
+                switch(east){
+                    case 1:
+                        assignExplore3Dir(Direction.WEST);
+                        return;
+                    case -1:
+                        assignExplore3Dir(Direction.EAST);
+                        return;
+                }
+                Direction dir = exploreDir.rotateLeft().rotateLeft();
+                if (!movingOutOfMap(dir)) assignExplore3Dir(dir);
+                else assignExplore3Dir(dir.opposite());
+                return;
+            case EAST:
+            case WEST:
+                int north = northCloser();
+                switch(north){
+                    case 1:
+                        assignExplore3Dir(Direction.SOUTH);
+                        return;
+                    case -1:
+                        assignExplore3Dir(Direction.NORTH);
+                        return;
+                }
+                dir = exploreDir.rotateLeft().rotateLeft();
+                if (!movingOutOfMap(dir)) assignExplore3Dir(dir);
+                else assignExplore3Dir(dir.opposite());
+                return;
+
+        }
+        /*double minCos = 0;
         Direction newDir = null;
         for (Direction dir : directions){
             if (dir == Direction.CENTER) continue;
@@ -245,6 +301,44 @@ public class Explore {
             exploreDir = newDir;
             angle = Math.atan2(exploreDir.dy, exploreDir.dx);
             //updateExplore3Target();
+        }*/
+    }
+
+    void getClosestExplore3Direction(){
+        Direction dirl = exploreDir.rotateLeft();
+        if (!movingOutOfMap(dirl)){
+            assignExplore3Dir(dirl);
+            return;
+        }
+        Direction dirr = exploreDir.rotateRight();
+        if (!movingOutOfMap(dirr)){
+            assignExplore3Dir(dirr);
+            return;
+        }
+        Direction dirll = dirl.rotateLeft();
+        if (!movingOutOfMap(dirll)){
+            assignExplore3Dir(dirll);
+            return;
+        }
+        Direction dirrr = dirr.rotateRight();
+        if (!movingOutOfMap(dirrr)){
+            assignExplore3Dir(dirrr);
+            return;
+        }
+        Direction dirlll = dirll.rotateLeft();
+        if (!movingOutOfMap(dirlll)){
+            assignExplore3Dir(dirlll);
+            return;
+        }
+        Direction dirrrr = dirrr.rotateRight();
+        if (!movingOutOfMap(dirrrr)){
+            assignExplore3Dir(dirrrr);
+            return;
+        }
+        Direction dirllll = dirlll.rotateLeft();
+        if (!movingOutOfMap(dirllll)){
+            assignExplore3Dir(dirllll);
+            return;
         }
     }
 
@@ -271,6 +365,14 @@ public class Explore {
             }
             loc = loc.add(dir);
             if (!rc.onTheMap(loc)) {
+                return true;
+            }
+            loc = loc.add(dir);
+            if (rc.canSenseLocation(loc) && !rc.onTheMap(loc)) {
+                return true;
+            }
+            loc = loc.add(dir);
+            if (rc.canSenseLocation(loc) && !rc.onTheMap(loc)) {
                 return true;
             }
         } catch (Exception e){
