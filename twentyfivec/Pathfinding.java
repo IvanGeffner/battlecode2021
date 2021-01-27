@@ -1,4 +1,4 @@
-package twentyfour;
+package twentyfivec;
 
 import battlecode.common.*;
 
@@ -60,12 +60,12 @@ public class Pathfinding {
     }
 
     public void move(MapLocation loc){
-        //System.err.println("Before pathfinding " + Clock.getBytecodeNum());
+        System.err.println("Before pathfinding " + Clock.getBytecodeNum());
         if (rc.getCooldownTurns() >= 1) return;
         target = loc;
         if (target == null) return;
 
-        //rc.setIndicatorLine(rc.getLocation(), target, 255, 0, 0);
+        rc.setIndicatorLine(rc.getLocation(), target, 255, 0, 0);
 
         if (target.distanceSquaredTo(rc.getLocation()) <= 0) return;
         if (!bugNav.move()) greedyPath();

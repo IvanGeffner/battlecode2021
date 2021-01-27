@@ -1,4 +1,4 @@
-package twentyfour;
+package twentyfiveb;
 
 import battlecode.common.*;
 
@@ -529,7 +529,7 @@ public class Politician extends MyRobot {
             if (Clock.getBytecodeNum() > MAX_BYTECODE_SEARCH) return bestLoc;
             MapLocation loc = r.getMapLocation();
             if (loc == null) continue;
-            //rc.setIndicatorDot(loc, 0, 255, 0);
+            rc.setIndicatorDot(loc, 0, 255, 0);
             double e = getEfficiency(RobotType.MUCKRAKER, r.influence, r.influence);
             if (e < rc.getConviction()) continue;
             int d = loc.distanceSquaredTo(myLoc);
@@ -727,7 +727,7 @@ public class Politician extends MyRobot {
                 if (Clock.getBytecodesLeft() < fleeBytecode) return muckDists;
                 MapLocation loc = r.getMapLocation();
                 if (loc == null) continue;
-                //rc.setIndicatorLine(myLoc, loc, 0, 0, 0);
+                rc.setIndicatorLine(myLoc, loc, 0, 0, 0);
                 for (int i = directions.length; i-- > 0; ) {
                     int d = myLoc.add(directions[i]).distanceSquaredTo(loc) + 1;
                     int md = muckDists[i];

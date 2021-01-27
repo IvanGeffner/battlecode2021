@@ -1,4 +1,4 @@
-package twentyfour;
+package twentyfiveb;
 
 import battlecode.common.*;
 
