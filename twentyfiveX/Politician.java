@@ -1,4 +1,4 @@
-package twentyfourc;
+package twentyfiveX;
 
 import battlecode.common.*;
 
@@ -52,6 +52,8 @@ public class Politician extends MyRobot {
     //final static int STRONG_THRESHOLD = 20;
 
     final static int ATTACK_BASE_TRESHOLD = 40;
+
+    final static int CAPTURE_BONUS = 10000;
 
 
     boolean explorer = false;
@@ -162,6 +164,7 @@ public class Politician extends MyRobot {
                                     shouldHit[0] = true;
                                     efficiency[0] += e * damages[0];
                                     if (str) efficiency[0] += GameConstants.EMPOWER_TAX + KILL_BONUS;
+                                    if(damages[0] > r.getConviction()) efficiency[0] += CAPTURE_BONUS;
                                 } else{
                                     efficiency[0] += e * unbuffedDamage[0];
                                 }
@@ -178,6 +181,7 @@ public class Politician extends MyRobot {
                                     shouldHit[1] = true;
                                     efficiency[1] += e * damages[1];
                                     if (str) efficiency[1] += GameConstants.EMPOWER_TAX + KILL_BONUS;
+                                    if(damages[1] > r.getConviction()) efficiency[1] += CAPTURE_BONUS;
                                 } else{
                                     efficiency[1] += e * unbuffedDamage[1];
                                 }
@@ -195,6 +199,7 @@ public class Politician extends MyRobot {
                                     shouldHit[2] = true;
                                     efficiency[2] += e * damages[2];
                                     if (str) efficiency[2] += GameConstants.EMPOWER_TAX + KILL_BONUS;
+                                    if(damages[2] > r.getConviction()) efficiency[2] += CAPTURE_BONUS;
                                 } else{
                                     efficiency[2] += e * unbuffedDamage[2];
                                 }
@@ -211,6 +216,7 @@ public class Politician extends MyRobot {
                                     shouldHit[3] = true;
                                     efficiency[3] += e * damages[3];
                                     if (str) efficiency[3] += GameConstants.EMPOWER_TAX + KILL_BONUS;
+                                    if(damages[3] > r.getConviction()) efficiency[3] += CAPTURE_BONUS;
                                 } else{
                                     efficiency[3] += e * unbuffedDamage[3];
                                 }
@@ -229,6 +235,7 @@ public class Politician extends MyRobot {
                                     shouldHit[4] = true;
                                     efficiency[4] += e * damages[4];
                                     if (str) efficiency[4] += GameConstants.EMPOWER_TAX + KILL_BONUS;
+                                    if(damages[4] > r.getConviction()) efficiency[4] += CAPTURE_BONUS;
                                 } else{
                                     efficiency[4] += e * unbuffedDamage[4];
                                 }
@@ -245,6 +252,7 @@ public class Politician extends MyRobot {
                                     shouldHit[5] = true;
                                     efficiency[5] += e * damages[5];
                                     if (str) efficiency[5] += GameConstants.EMPOWER_TAX + KILL_BONUS;
+                                    if(damages[5] > r.getConviction()) efficiency[5] += CAPTURE_BONUS;
                                 } else{
                                     efficiency[5] += e * unbuffedDamage[5];
                                 }
@@ -529,7 +537,7 @@ public class Politician extends MyRobot {
             if (Clock.getBytecodeNum() > MAX_BYTECODE_SEARCH) return bestLoc;
             MapLocation loc = r.getMapLocation();
             if (loc == null) continue;
-            //rc.setIndicatorDot(loc, 0, 255, 0);
+            rc.setIndicatorDot(loc, 0, 255, 0);
             double e = getEfficiency(RobotType.MUCKRAKER, r.influence, r.influence);
             if (e < rc.getConviction()) continue;
             int d = loc.distanceSquaredTo(myLoc);
@@ -727,7 +735,7 @@ public class Politician extends MyRobot {
                 if (Clock.getBytecodesLeft() < fleeBytecode) return muckDists;
                 MapLocation loc = r.getMapLocation();
                 if (loc == null) continue;
-                //rc.setIndicatorLine(myLoc, loc, 0, 0, 0);
+                rc.setIndicatorLine(myLoc, loc, 0, 0, 0);
                 for (int i = directions.length; i-- > 0; ) {
                     int d = myLoc.add(directions[i]).distanceSquaredTo(loc) + 1;
                     int md = muckDists[i];

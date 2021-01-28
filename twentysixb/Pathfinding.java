@@ -1,4 +1,4 @@
-package twentyfourc;
+package twentysixb;
 
 import battlecode.common.*;
 
@@ -65,7 +65,7 @@ public class Pathfinding {
         target = loc;
         if (target == null) return;
 
-        //rc.setIndicatorLine(rc.getLocation(), target, 255, 0, 0);
+        rc.setIndicatorLine(rc.getLocation(), target, 255, 0, 0);
 
         if (target.distanceSquaredTo(rc.getLocation()) <= 0) return;
         if (!bugNav.move()) greedyPath();

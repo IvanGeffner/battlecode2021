@@ -1,4 +1,4 @@
-package twentyfourc;
+package twentynine;
 
 import battlecode.common.*;
 
@@ -20,7 +20,7 @@ public class Politician extends MyRobot {
 
     //int PROTECT_TURNS = 30 + 10;
     int turnCreation = 0;
-    int protectTurns;
+    int protectTurns = 0;
 
     int MAX_BYTECODE_SEARCH = 9500;
 
@@ -43,6 +43,7 @@ public class Politician extends MyRobot {
     static final int MAX_MAP_SIZE = GameConstants.MAP_MAX_HEIGHT;
     static final int MAX_MAP_SIZE2 = 2*MAX_MAP_SIZE;
     Slanderer slanderer = new Slanderer();
+    UselessPolitician uselessPoli = new UselessPolitician();
     boolean moved = false;
 
     static Team myTeam, enemyTeam;
@@ -52,6 +53,12 @@ public class Politician extends MyRobot {
     //final static int STRONG_THRESHOLD = 20;
 
     final static int ATTACK_BASE_TRESHOLD = 40;
+
+    final static int PROTECT_TRESHOLD = 17;
+
+    final static int CAPTURE_BONUS = 10000;
+
+    int MIN_TURN_PROTECT = 90;
 
 
     boolean explorer = false;
@@ -74,19 +81,23 @@ public class Politician extends MyRobot {
 
 
     void getProtectTurns(){
+        if (rc.getRoundNum() < MIN_TURN_PROTECT){
+            protectTurns = 0;
+            return;
+        }
         if (rc.getConviction() - GameConstants.EMPOWER_TAX < 2){
             protectTurns = 0;
             return;
         };
         if (rc.getConviction() <= 20){
-            protectTurns = 50 + 10;
+            protectTurns = 30 + 10;
             return;
         }
         if (rc.getConviction() <= 30){
-            protectTurns = 20 + 10;
+            protectTurns = 15 + 10;
             return;
         }
-        protectTurns = 0;
+        //protectTurns = 0;
     }
 
     public void play(){
@@ -96,7 +107,12 @@ public class Politician extends MyRobot {
             slanderer.play();
             return;
         }
-        checkSuicide();
+
+        if (rc.getInfluence() <= GameConstants.EMPOWER_TAX){
+            uselessPoli.play();
+            return;
+        }
+        //checkSuicide();
         //politician
         update();
         tryAttack();
@@ -162,6 +178,7 @@ public class Politician extends MyRobot {
                                     shouldHit[0] = true;
                                     efficiency[0] += e * damages[0];
                                     if (str) efficiency[0] += GameConstants.EMPOWER_TAX + KILL_BONUS;
+                                    if(damages[0] > r.getConviction()) efficiency[0] += CAPTURE_BONUS;
                                 } else{
                                     efficiency[0] += e * unbuffedDamage[0];
                                 }
@@ -178,6 +195,7 @@ public class Politician extends MyRobot {
                                     shouldHit[1] = true;
                                     efficiency[1] += e * damages[1];
                                     if (str) efficiency[1] += GameConstants.EMPOWER_TAX + KILL_BONUS;
+                                    if(damages[1] > r.getConviction()) efficiency[1] += CAPTURE_BONUS;
                                 } else{
                                     efficiency[1] += e * unbuffedDamage[1];
                                 }
@@ -195,6 +213,7 @@ public class Politician extends MyRobot {
                                     shouldHit[2] = true;
                                     efficiency[2] += e * damages[2];
                                     if (str) efficiency[2] += GameConstants.EMPOWER_TAX + KILL_BONUS;
+                                    if(damages[2] > r.getConviction()) efficiency[2] += CAPTURE_BONUS;
                                 } else{
                                     efficiency[2] += e * unbuffedDamage[2];
                                 }
@@ -211,6 +230,7 @@ public class Politician extends MyRobot {
                                     shouldHit[3] = true;
                                     efficiency[3] += e * damages[3];
                                     if (str) efficiency[3] += GameConstants.EMPOWER_TAX + KILL_BONUS;
+                                    if(damages[3] > r.getConviction()) efficiency[3] += CAPTURE_BONUS;
                                 } else{
                                     efficiency[3] += e * unbuffedDamage[3];
                                 }
@@ -229,6 +249,7 @@ public class Politician extends MyRobot {
                                     shouldHit[4] = true;
                                     efficiency[4] += e * damages[4];
                                     if (str) efficiency[4] += GameConstants.EMPOWER_TAX + KILL_BONUS;
+                                    if(damages[4] > r.getConviction()) efficiency[4] += CAPTURE_BONUS;
                                 } else{
                                     efficiency[4] += e * unbuffedDamage[4];
                                 }
@@ -245,6 +266,7 @@ public class Politician extends MyRobot {
                                     shouldHit[5] = true;
                                     efficiency[5] += e * damages[5];
                                     if (str) efficiency[5] += GameConstants.EMPOWER_TAX + KILL_BONUS;
+                                    if(damages[5] > r.getConviction()) efficiency[5] += CAPTURE_BONUS;
                                 } else{
                                     efficiency[5] += e * unbuffedDamage[5];
                                 }
@@ -254,7 +276,7 @@ public class Politician extends MyRobot {
                 case SLANDERER:
                 case POLITICIAN:
                 case MUCKRAKER:
-                    if (ally) maxInf = r.getInfluence() - r.getConviction();
+                    if (ally) maxInf = Math.max((int)(0.7*r.getInfluence()) - r.getConviction(), 0);
                     else {
                         if (r.getType() == RobotType.MUCKRAKER){
                             maxInf = r.getConviction() + 1;
@@ -379,10 +401,61 @@ public class Politician extends MyRobot {
         }
     }
 
+    Direction protectDir = null;
+    MapLocation protectLoc = null;
+
+    boolean alreadyCovered (MapLocation loc){
+        try {
+            if (!rc.canSenseLocation(loc)) return false;
+            RobotInfo r = rc.senseRobotAtLocation(loc);
+            if (r == null) return false;
+            if (r.getType() != RobotType.POLITICIAN) return false;
+            if (r.getConviction() > PROTECT_TRESHOLD) return false;
+            if (r.getTeam() != rc.getTeam()) return false;
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        return true;
+    }
+
+    MapLocation getProtectTarget(){
+        MapLocation ecLoc = comm.getClosestEC();
+        if (ecLoc == null){
+            protectLoc = null;
+            return null;
+        }
+        if (protectLoc != null && explore.inTheMap(protectLoc) && !alreadyCovered(protectLoc)) return protectLoc;
+        if (protectDir == null){
+            protectDir = rc.getLocation().directionTo(ecLoc);
+            if (protectDir.ordinal()%2 == 0) protectDir = protectDir.rotateLeft();
+        }
+        for (int i = 4; i-- > 0; protectDir = protectDir.rotateLeft().rotateLeft()){
+            MapLocation newLoc = ecLoc.add(protectDir).add(protectDir).add(protectDir);
+            if (!explore.inTheMap(newLoc))continue;
+            if (alreadyCovered(newLoc)) continue;
+            protectLoc = newLoc;
+            return protectLoc;
+        }
+        return null;
+    }
+
     boolean tryProtect(){
-        //if (!weak()) return false;
+        /*if (rc.getConviction() > PROTECT_TRESHOLD) return false;
+
+        if (protectLoc != null && protectLoc.distanceSquaredTo(rc.getLocation()) == 0) return true;
+
         if (rc.getRoundNum() - turnCreation >= protectTurns) return false;
-        return surroundOurHQ(25);
+
+        MapLocation target = getProtectTarget();
+        if (target != null) rc.setIndicatorLine(rc.getLocation(), target, 0, 0, 255);
+
+        if (target == null) return surroundOurHQ(13);
+        bfs.move(target);
+        return true;*/
+
+        if (rc.getRoundNum() - turnCreation >= protectTurns) return false;
+        return surroundOurHQ(20);
+
     }
 
     void tryAttack(){
@@ -621,13 +694,14 @@ public class Politician extends MyRobot {
 
         final int MUCKRAKER_MEMORY = 10;
 
-        final int fleeBytecode = 1500;
+        final int fleeBytecode = 1700;
         final double muckrakerActionDist = RobotType.MUCKRAKER.actionRadiusSquared;
 
         MapLocation farLocation = null;
         Integer farValue = 0;
         RobotInfo lastEnemyMuckrakerSeen = null;
         int turnSeen = 0;
+        Direction checkDirection = null;
 
         public Slanderer(){}
 
@@ -645,6 +719,36 @@ public class Politician extends MyRobot {
             }
 
             if (surroundOurHQ(Util.SAFETY_DISTANCE_OUR_HQ)){
+                return;
+            }
+
+            //moveAround();
+        }
+
+        MapLocation getExplorationTarget(){
+            MapLocation ecLoc = comm.getClosestEC();
+            if (ecLoc == null) return null;
+            if (checkDirection == null) checkDirection = rc.getLocation().directionTo(ecLoc);
+            Direction dir = null;
+            for (int i = 8; i-- > 0; ){
+                MapLocation newLoc = ecLoc.add(checkDirection).add(checkDirection).add(checkDirection);
+                if (!explore.inTheMap(newLoc)) continue;
+                if (dir == null) dir = checkDirection;
+                if (rc.getLocation().distanceSquaredTo(ecLoc) <= 2) continue;
+                checkDirection = dir;
+                return newLoc;
+            }
+            if (dir != null){
+                checkDirection = dir;
+                return ecLoc.add(dir).add(dir).add(dir);
+            }
+            return null;
+        }
+
+        void moveAround(){
+            MapLocation target = getExplorationTarget();
+            if (target != null){
+                bfs.move(target, true);
                 return;
             }
         }
@@ -672,7 +776,10 @@ public class Politician extends MyRobot {
                 }
                 if (bestDir != null){
                     moved = true;
-                    if (bestDir != Direction.CENTER) rc.move(bestDir);
+                    if (bestDir != Direction.CENTER){
+                        rc.move(bestDir);
+                        bfs.path.bugNav.resetPathfinding();
+                    }
                     return true;
                 }
             } catch (Exception e){
@@ -741,7 +848,7 @@ public class Politician extends MyRobot {
 
         MapLocation bestLatticeLoc = null;
         static final int MIN_LATTICE_DIST = 5;
-        static final int MAX_BYTECODE_REMAINING = 1500;
+        static final int MAX_BYTECODE_REMAINING = 1700;
 
         boolean moveToLattice() {
             try {
@@ -784,6 +891,184 @@ public class Politician extends MyRobot {
             }
 
             return false;
+        }
+
+    }
+
+    class UselessPolitician{
+
+        MapLocation closestEnemyEC;
+
+        void play(){
+            closestEnemyEC = comm.getClosestEnemyEC();
+            trySuicide();
+            tryMove();
+        }
+
+        void tryMove(){
+            if (closestEnemyEC == null) {
+                MapLocation loc = explore.getExploreTarget();
+                if (loc != null){
+                    bfs.move(loc);
+                }
+                return;
+            }
+            MapLocation loc = getBestAdjacentAll(closestEnemyEC);
+            if (loc != null) bfs.move(loc);
+        }
+
+        void suicide(){
+            try{
+                if (rc.canEmpower(1)) rc.empower(1);
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+
+        void trySuicide(){
+            try {
+                if (rc.getRoundNum() > 600) {
+                    suicide();
+                    return;
+                }
+                if (closestEnemyEC == null) return;
+                if (rc.getLocation().distanceSquaredTo(closestEnemyEC) <= 2){
+                    RobotInfo[] allies = rc.senseNearbyRobots(rc.getType().sensorRadiusSquared, rc.getTeam());
+                    for (RobotInfo r : allies){
+                        if (r.getType() == RobotType.POLITICIAN && r.getConviction() >= ATTACK_BASE_TRESHOLD){
+                            if (r.getLocation().distanceSquaredTo(closestEnemyEC) <= 8) {
+                                suicide();
+                                return;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+
+        MapLocation getBestAdjacentAll(MapLocation loc){
+
+            try {
+
+                MapLocation myLoc = rc.getLocation();
+                if (rc.getLocation().distanceSquaredTo(loc) == 2) return rc.getLocation();
+
+                MapLocation ans = null;
+                Integer bestDist = null;
+
+                MapLocation newLoc = loc.add(Direction.NORTHWEST);
+                if (rc.canSenseLocation(newLoc)) {
+                    if (rc.onTheMap(newLoc)) {
+                        if (!rc.isLocationOccupied(newLoc)) {
+                            int d = myLoc.distanceSquaredTo(newLoc);
+                            if (bestDist == null || d < bestDist){
+                                bestDist = d;
+                                ans = newLoc;
+                            }
+                        }
+                    }
+                }
+
+                newLoc = loc.add(Direction.NORTHEAST);
+                if (rc.canSenseLocation(newLoc)) {
+                    if (rc.onTheMap(newLoc)) {
+                        if (!rc.isLocationOccupied(newLoc)) {
+                            int d = myLoc.distanceSquaredTo(newLoc);
+                            if (bestDist == null || d < bestDist){
+                                bestDist = d;
+                                ans = newLoc;
+                            }
+                        }
+                    }
+                }
+
+                newLoc = loc.add(Direction.SOUTHWEST);
+                if (rc.canSenseLocation(newLoc)) {
+                    if (rc.onTheMap(newLoc)) {
+                        if (!rc.isLocationOccupied(newLoc)) {
+                            int d = myLoc.distanceSquaredTo(newLoc);
+                            if (bestDist == null || d < bestDist){
+                                bestDist = d;
+                                ans = newLoc;
+                            }
+                        }
+                    }
+                }
+
+                newLoc = loc.add(Direction.SOUTHEAST);
+                if (rc.canSenseLocation(newLoc)) {
+                    if (rc.onTheMap(newLoc)) {
+                        if (!rc.isLocationOccupied(newLoc)) {
+                            int d = myLoc.distanceSquaredTo(newLoc);
+                            if (bestDist == null || d < bestDist){
+                                //bestDist = d;
+                                ans = newLoc;
+                            }
+                        }
+                    }
+                }
+                if (ans != null) return ans;
+
+                if (rc.getLocation().distanceSquaredTo(loc) == 1) return rc.getLocation();
+
+                newLoc = loc.add(Direction.NORTH);
+                if (rc.canSenseLocation(newLoc)) {
+                    if (rc.onTheMap(newLoc)) {
+                        if (!rc.isLocationOccupied(newLoc)) {
+                            int d = myLoc.distanceSquaredTo(newLoc);
+                            if (bestDist == null || d < bestDist){
+                                bestDist = d;
+                                ans = newLoc;
+                            }
+                        }
+                    }
+                }
+
+                newLoc = loc.add(Direction.SOUTH);
+                if (rc.canSenseLocation(newLoc)) {
+                    if (rc.onTheMap(newLoc)) {
+                        if (!rc.isLocationOccupied(newLoc)) {
+                            int d = myLoc.distanceSquaredTo(newLoc);
+                            if (bestDist == null || d < bestDist){
+                                bestDist = d;
+                                ans = newLoc;
+                            }
+                        }
+                    }
+                }
+
+                newLoc = loc.add(Direction.EAST);
+                if (rc.canSenseLocation(newLoc)) {
+                    if (rc.onTheMap(newLoc)) {
+                        if (!rc.isLocationOccupied(newLoc)) {
+                            int d = myLoc.distanceSquaredTo(newLoc);
+                            if (bestDist == null || d < bestDist){
+                                bestDist = d;
+                                ans = newLoc;
+                            }
+                        }
+                    }
+                }
+
+                newLoc = loc.add(Direction.WEST);
+                if (rc.canSenseLocation(newLoc)) {
+                    if (rc.onTheMap(newLoc)) {
+                        if (!rc.isLocationOccupied(newLoc)) {
+                            int d = myLoc.distanceSquaredTo(newLoc);
+                            if (bestDist == null || d < bestDist){
+                                //bestDist = d;
+                                ans = newLoc;
+                            }
+                        }
+                    }
+                }
+                if (ans != null) return ans;
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+            return loc;
         }
 
     }

@@ -1,6 +1,9 @@
-package twentyfourc;
+package twentyseven;
 
-import battlecode.common.*;
+import battlecode.common.Direction;
+import battlecode.common.GameConstants;
+import battlecode.common.MapLocation;
+import battlecode.common.RobotController;
 
 import java.util.HashSet;
 
@@ -60,15 +63,15 @@ public class Pathfinding {
     }
 
     public void move(MapLocation loc){
-        System.err.println("Before pathfinding " + Clock.getBytecodeNum());
         if (rc.getCooldownTurns() >= 1) return;
         target = loc;
-        if (target == null) return;
+        /*if (target == null) return;
 
-        //rc.setIndicatorLine(rc.getLocation(), target, 255, 0, 0);
+        rc.setIndicatorLine(rc.getLocation(), target, 255, 0, 0);
 
-        if (target.distanceSquaredTo(rc.getLocation()) <= 0) return;
-        if (!bugNav.move()) greedyPath();
+        if (target.distanceSquaredTo(rc.getLocation()) <= 0) return;*/
+        //if (!bugNav.move()) greedyPath();
+        bugNav.move();
     }
 
     final double eps = 1e-5;
@@ -158,7 +161,7 @@ public class Pathfinding {
                 if (lastObstacleFound != null) dir = myLoc.directionTo(lastObstacleFound);
                 if (canMove(dir)){
                     resetPathfinding();
-                    return false;
+                    //return false;
                 }
 
                 //I rotate clockwise or counterclockwise (depends on 'rotateRight'). If I try to go out of the map I change the orientation

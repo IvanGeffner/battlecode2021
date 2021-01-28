@@ -1,4 +1,4 @@
-package twentyfourc;
+package thirtyone;
 
 import battlecode.common.*;
 
@@ -60,15 +60,13 @@ public class Pathfinding {
     }
 
     public void move(MapLocation loc){
-        System.err.println("Before pathfinding " + Clock.getBytecodeNum());
         if (rc.getCooldownTurns() >= 1) return;
         target = loc;
-        if (target == null) return;
 
         //rc.setIndicatorLine(rc.getLocation(), target, 255, 0, 0);
 
-        if (target.distanceSquaredTo(rc.getLocation()) <= 0) return;
         if (!bugNav.move()) greedyPath();
+        bugNav.move();
     }
 
     final double eps = 1e-5;
@@ -158,7 +156,7 @@ public class Pathfinding {
                 if (lastObstacleFound != null) dir = myLoc.directionTo(lastObstacleFound);
                 if (canMove(dir)){
                     resetPathfinding();
-                    return false;
+                    if (rc.getType() != RobotType.SLANDERER) return false;
                 }
 
                 //I rotate clockwise or counterclockwise (depends on 'rotateRight'). If I try to go out of the map I change the orientation
