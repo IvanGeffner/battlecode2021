@@ -34,7 +34,7 @@ public class Enlightment extends MyRobot {
 
     final int MIN_BIG_POLI_INF = 200;
 
-    final int BIG_MUCK_INF = 303;
+    final int BIG_MUCK_INF = 143;
 
     final int WAIT_TURNS_CONQUER = 20;
     final int SMALL_POLITICIAN_INFLUENCE = 16;
@@ -648,7 +648,7 @@ public class Enlightment extends MyRobot {
         if (minInf + safety > rc.getInfluence()) {
             return 0;
         }*/
-        return minInf;
+        return minInf + (rc.getInfluence() - safety - minInf)/2;
     }
 
     int getMinBigMuckInf(){
